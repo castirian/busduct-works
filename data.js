@@ -1,7 +1,7 @@
 const projects = [
   {
     date: "2025-04-21",
-    project: "부산 BIFC2",
+    project: "대우건설 부산 BIFC2",
     photos: [
       "images/2025-04-21/photo1.jpg",
       "images/2025-04-21/photo2.jpg",
@@ -11,18 +11,12 @@ const projects = [
       "images/2025-04-21/photo6.jpg",
       "images/2025-04-21/photo7.jpg",
       "images/2025-04-21/photo8.jpg",
-      "images/2025-04-21/photo9.jpg",
-      "images/2025-04-21/photo10.jpg",
-      "images/2025-04-21/photo11.jpg",
-      "images/2025-04-21/photo12.jpg",
-      "images/2025-04-21/photo13.jpg",
-      "images/2025-04-21/photo14.jpg",
-      "images/2025-04-21/photo15.jpg"
+      "images/2025-04-21/photo9.jpg"
     ]
   },
   {
     date: "2025-04-11",
-    project: "울산 신정동 공동주택",
+    project: "금호건설 울산 신정동 공동주택",
     photos: [
       "images/2025-04-11/photo1.jpg",
       "images/2025-04-11/photo2.jpg",
@@ -67,7 +61,7 @@ const projects = [
   },
   {
     date: "2024-11-23",
-    project: "대우 서충주 푸르지오 더퍼스트",
+    project: "대우건설 서충주 푸르지오 더퍼스트",
     photos: [
       "images/2024-11-23/photo1.jpg",
       "images/2024-11-23/photo2.jpg",
@@ -82,7 +76,7 @@ const projects = [
   },
   {
     date: "2024-11-14",
-    project: "대구신세계 빌리브루센트",
+    project: "신세계 대구 빌리브루센트",
     photos: [
       "images/2024-11-14/photo1.jpg",
       "images/2024-11-14/photo2.jpg",
@@ -112,7 +106,7 @@ const projects = [
   },
   {
     date: "2024-10-01",
-    project: "인천 시티오 씨엘 4단지",
+    project: "포스코 인천 시티오 씨엘 4단지",
     photos: [
       "images/2024-10-01/photo1.jpg",
       "images/2024-10-01/photo2.jpg",
@@ -127,7 +121,7 @@ const projects = [
   },
   {
     date: "2024-09-25",
-    project: "강원 힐스테이트 원주 레스티지",
+    project: "현대 강원 힐스테이트 원주 레스티지",
     photos: [
       "images/2024-09-25/photo1.jpg",
       "images/2024-09-25/photo2.jpg",

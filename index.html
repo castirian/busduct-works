@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -8,60 +8,46 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightbox2@2/dist/css/lightbox.min.css"/>
 </head>
-
-
 <body>
 
+  <!-- A. Hero 섹션 -->
   <header class="hero">
     <div class="hero-content">
       <h1>부스덕트 작업 포트폴리오</h1>
-
+      <p class="subtitle">년도별 설치 사진 모음</p>
+      <button id="themeToggle" aria-label="다크 모드 토글">🌙</button>
     </div>
   </header>
-  
 
-    <!-- 프로젝트 타임라인 섹션 추가 -->
-    <section class="timeline">
-      <h2>프로젝트 타임라인</h2>
-      <ul>
-        <li>2025년 04월 — 부산 BIFC2</li>
-        <li>2025년 04월 — 울산 신정동 공동주택</li>
-        <li>2025년 03월 — 김해 신문 1지구 현장</li>
-        <li>2024년 12월 — 부산 명지지구 아파텔 5BL, 6BL</li>
-        <li>2024년 11월 — 대구 신세계 빌리브루센트</li>
-        <li>2024년 10월 — 인천 시티오 씨엘 4단지</li>
-        <li>2024년 09월 — 강원 힐스테이트 원주 레스티지</li>
+  <!-- B. 필터 바 -->
+  <div class="filter-bar">
+    <button class="ripple active" data-filter="all">전체 보기</button>
+    <button class="ripple"      data-filter="2024">2024년</button>
+    <button class="ripple"      data-filter="2023">2023년</button>
+  </div>
 
-        <!-- 나머지 항목도 계속 추가 -->
-      </ul>
-    </section>
+  <!-- C. 타임라인 (컨테이너 적용) -->
+  <section class="timeline container">
+    <h2>프로젝트 타임라인</h2>
+    <ul>
+      <li>2025년 04월 — 부산 BIFC2</li>
+      <li>2025년 04월 — 울산 신정동 공동주택</li>
+      <li>2025년 03월 — 김해 신문 1지구 현장</li>
+      <li>2024년 12월 — 부산 명지지구 아파텔 5BL, 6BL</li>
+      <li>2024년 11월 — 대구 신세계 빌리브루센트</li>
+      <li>2024년 10월 — 인천 시티오 씨엘 4단지</li>
+      <li>2024년 09월 — 강원 힐스테이트 원주 레스티지</li>
+    </ul>
+  </section>
 
-  <main id="portfolio"></main>
+  <!-- D. 포트폴리오 갤러리 (컨테이너 적용) -->
+  <main id="portfolio" class="container"></main>
 
-  
-  <body>
+  <!-- TOP 버튼 -->
+  <button id="topBtn" aria-label="맨 위로">TOP</button>
 
-  
-
-  
-    <main id="portfolio"></main>
-  
-    <!-- 기존 스크립트 로딩 -->
-    <script src="data.js"></script>
-    <script src="app.js"></script>
-    …
-  </body>
-  
-  <script src="data.js"></script>
-  <script src="app.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lightbox2@2/dist/js/lightbox-plus-jquery.min.js"></script>
+  <script src="data.js" defer></script>
+  <script src="app.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/lightbox2@2/dist/js/lightbox-plus-jquery.min.js" defer></script>
 </body>
-
-  <!-- 포트폴리오 섹션 끝나고… -->
-  <button id="topBtn">TOP</button>
-
-  <!-- 스크립트 로드 -->
-  <script src="data.js"></script>
-  <script src="app.js"></script>
-
 </html>

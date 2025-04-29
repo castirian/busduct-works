@@ -1,157 +1,134 @@
-const portfolio = document.getElementById('portfolio');
+// 데이터 로드 후 포트폴리오 생성
+document.addEventListener('DOMContentLoaded', () => {
+  const portfolio = document.getElementById('portfolio');
+  projects.forEach(project => {
+    const section = document.createElement('section');
+    const title = document.createElement('h2');
+    title.textContent = `${project.date} — ${project.project}`;
+    section.appendChild(title);
 
-projects.forEach(project => {
-  const section = document.createElement('section');
+    const photosDiv = document.createElement('div');
+    photosDiv.className = 'photos';
 
-  const title = document.createElement('h2');
-  title.textContent = `${project.date} - ${project.project}`;
-  section.appendChild(title);
+    project.photos.forEach(file => {
+      const ext = file.split('.').pop().toLowerCase();
+      const link = document.createElement('a');
+      link.classList.add('ripple');
 
-  const photosDiv = document.createElement('div');
-  photosDiv.className = 'photos';
+      if (['jpg','jpeg','png'].includes(ext)) {
+        link.href = file;
+        link.setAttribute('data-lightbox', project.date);
+        const img = document.createElement('img');
+        img.src = file;
+        img.loading = 'lazy';
+        link.appendChild(img);
 
-  project.photos.forEach(file => {
-    const ext = file.split('.').pop().toLowerCase();
-    const link = document.createElement('a');
+      } else if (['mp4','webm'].includes(ext)) {
+        link.href = '#';
+        const video = document.createElement('video');
+        video.src = file;
+        video.autoplay = true;
+        video.loop = true;
+        video.muted = true;
+        video.playsInline = true;
+        video.style.cursor = 'pointer';
+        video.style.display = 'block';
+        video.loading = 'lazy';
+        video.addEventListener('click', e => {
+          e.preventDefault();
+          openVideoModal(file);
+        });
+        link.appendChild(video);
+      }
 
-    if (['jpg', 'jpeg', 'png'].includes(ext)) {
-      // ✅ 이미지인 경우: Lightbox 연결
-      link.href = file;
-      link.setAttribute('data-lightbox', project.date);
+      photosDiv.appendChild(link);
+    });
 
-      const img = document.createElement('img');
-      img.src = file;
-      link.appendChild(img);
-
-    } else if (['mp4', 'webm'].includes(ext)) {
-      // ✅ 동영상인 경우: Lightbox 연결 ❌, 모달로 처리
-      link.href = "#"; // 링크 막기 (충돌 방지)
-
-      const video = document.createElement('video');
-      video.src = file;
-      video.autoplay = true;
-      video.loop = true;
-      video.muted = true;
-      video.playsInline = true; // 모바일 autoplay 활성화
-      // controls ❌: 메인에서는 하단바 제거
-
-      video.style.width = "100%";
-      video.style.borderRadius = "8px";
-      video.style.boxShadow = "0 2px 10px rgba(0,0,0,0.1)";
-      video.style.backgroundColor = "#000";
-
-      video.addEventListener('click', function (e) {
-        e.preventDefault();
-        openVideoModal(file);
-      });
-
-      link.appendChild(video);
-    }
-
-    photosDiv.appendChild(link);
+    section.appendChild(photosDiv);
+    portfolio.appendChild(section);
   });
 
-  section.appendChild(photosDiv);
-  portfolio.appendChild(section);
-});
+  // 필터 바 로직
+  document.querySelectorAll('.filter-bar button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-bar button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const year = btn.dataset.filter;
+      document.querySelectorAll('#portfolio section').forEach(sec => {
+        const date = sec.querySelector('h2').textContent.slice(0,4);
+        sec.style.display = (year==='all'||date===year) ? '' : 'none';
+      });
+    });
+  });
 
-// ✅ 스크롤 시 섹션 애니메이션
-document.addEventListener('DOMContentLoaded', function () {
+  // 스크롤 애니메이션
   const sections = document.querySelectorAll('section');
-
-  function checkVisibility() {
-    sections.forEach(section => {
-      const rect = section.getBoundingClientRect();
-      if (rect.top < window.innerHeight && rect.bottom >= 0) {
-        section.classList.add('visible');
-      }
+  function checkVisible(){
+    sections.forEach(s => {
+      const r = s.getBoundingClientRect();
+      if (r.top < window.innerHeight && r.bottom >= 0) s.classList.add('visible');
     });
   }
+  window.addEventListener('scroll', checkVisible);
+  checkVisible();
 
-  window.addEventListener('scroll', checkVisibility);
-  checkVisibility();
+  // 테마 토글
+  const toggle = document.getElementById('themeToggle');
+  const saved = localStorage.getItem('theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+  toggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    localStorage.setItem('theme', isDark ? 'light' : 'dark');
+    toggle.textContent = isDark ? '🌙' : '☀️';
+  });
+
+  // Top 버튼
+  const topBtn = document.getElementById('topBtn');
+  function checkBottom(){
+    const dh = Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight
+    );
+    const sp = window.pageYOffset + window.innerHeight;
+    if (sp >= dh - 50) topBtn.classList.add('show');
+    else topBtn.classList.remove('show');
+  }
+  window.addEventListener('scroll', checkBottom);
+  window.addEventListener('resize', checkBottom);
+  checkBottom();
+  topBtn.addEventListener('click', ()=> window.scrollTo({top:0,behavior:'smooth'}));
 });
 
-// ✅ 동영상 모달 팝업 기능
-function openVideoModal(videoSrc) {
-  // 기존 모달 제거
-  const existingModal = document.getElementById('videoModal');
-  if (existingModal) existingModal.remove();
-
-  // 모달 박스 생성
+// 비디오 모달
+function openVideoModal(videoSrc){
+  document.getElementById('videoModal')?.remove();
   const modal = document.createElement('div');
-  modal.id = 'videoModal';
-  modal.style.position = 'fixed';
-  modal.style.top = 0;
-  modal.style.left = 0;
-  modal.style.width = '100vw';
-  modal.style.height = '100vh';
-  modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
-  modal.style.display = 'flex';
-  modal.style.alignItems = 'center';
-  modal.style.justifyContent = 'center';
-  modal.style.zIndex = 1000;
-
-  // 로딩 텍스트 (영상 로딩 대기)
+  modal.id='videoModal';
+  Object.assign(modal.style, {
+    position:'fixed',top:0,left:0,
+    width:'100vw',height:'100vh',
+    background:'rgba(0,0,0,0.8)',
+    display:'flex',alignItems:'center',justifyContent:'center',
+    zIndex:1000
+  });
   const loader = document.createElement('div');
-  loader.innerText = '동영상 불러오는 중...';
-  loader.style.color = 'white';
-  loader.style.fontSize = '20px';
+  loader.innerText='동영상 불러오는 중…';
+  loader.style.color='white';
+  loader.style.fontSize='20px';
   modal.appendChild(loader);
   document.body.appendChild(modal);
 
-  // 영상 엘리먼트 생성
   const video = document.createElement('video');
-  video.src = videoSrc;
-  video.controls = true;
-  video.autoplay = true;
-  video.style.maxWidth = '90%';
-  video.style.maxHeight = '90%';
-  video.style.borderRadius = '10px';
-  video.style.boxShadow = '0 4px 20px rgba(0,0,0,0.5)';
-  video.style.backgroundColor = '#000';
-
-  // 로딩 완료되면 모달에 영상 표시
+  video.src=videoSrc; video.controls=true; video.autoplay=true;
+  Object.assign(video.style,{
+    maxWidth:'90%',maxHeight:'90%',
+    borderRadius:'10px',boxShadow:'0 4px 20px rgba(0,0,0,0.5)',
+    background:'#000'
+  });
   video.onloadeddata = () => {
-    modal.removeChild(loader);
+    loader.remove();
     modal.appendChild(video);
   };
-
-  // 바깥 클릭 시 닫기
-  modal.addEventListener('click', () => {
-    modal.remove();
-  });
+  modal.addEventListener('click', ()=> modal.remove());
 }
-
-// ─── Top 버튼 제어 ───────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  const topBtn = document.getElementById('topBtn');
-
-  function checkBottom() {
-    // 문서 전체 높이
-    const docHeight = Math.max(
-      document.body.scrollHeight,
-      document.documentElement.scrollHeight,
-      document.body.offsetHeight,
-      document.documentElement.offsetHeight,
-      document.body.clientHeight,
-      document.documentElement.clientHeight
-    );
-    // 현재 스크롤 위치 (상단에서 얼만큼)
-    const scrollPosition = window.pageYOffset + window.innerHeight;
-    // 바닥에서 50px 남았을 때부터 show
-    if (scrollPosition >= docHeight - 50) {
-      topBtn.classList.add('show');
-    } else {
-      topBtn.classList.remove('show');
-    }
-  }
-
-  window.addEventListener('scroll', checkBottom);
-  window.addEventListener('resize', checkBottom);
-  checkBottom(); // 초기 검사
-
-  topBtn.addEventListener('click', () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-});
