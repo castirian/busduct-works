@@ -1,0 +1,61 @@
+const projects = [
+  {
+    date: "2025-05-03",
+    project: "2025-05-03",
+    photos: [
+      "images/2025-05-03/photo1.jpg",
+      "images/2025-05-03/photo2.jpg",
+      "images/2025-05-03/photo3.jpg",
+      "images/2025-05-03/photo4.jpg",
+      "images/2025-05-03/photo5.jpg",
+      "images/2025-05-03/photo6.jpg",
+      "images/2025-05-03/photo7.jpg",
+      "images/2025-05-03/photo8.jpg",
+      "images/2025-05-03/photo9.jpg",
+      "images/2025-05-03/photo10.jpg",
+      "images/2025-05-03/photo11.jpg",
+      "images/2025-05-03/photo12.jpg",
+      "images/2025-05-03/photo13.jpg",
+      "images/2025-05-03/photo14.jpg",
+      "images/2025-05-03/photo15.jpg",
+      "images/2025-05-03/photo16.jpg",
+      "images/2025-05-03/photo17.jpg",
+      "images/2025-05-03/photo18.jpg",
+      "images/2025-05-03/photo19.jpg",
+      "images/2025-05-03/photo20.jpg",
+      "images/2025-05-03/photo21.jpg",
+      "images/2025-05-03/photo22.jpg",
+      "images/2025-05-03/photo23.jpg",
+      "images/2025-05-03/photo24.jpg",
+      "images/2025-05-03/photo25.jpg",
+      "images/2025-05-03/photo26.jpg",
+      "images/2025-05-03/photo27.jpg",
+      "images/2025-05-03/photo28.jpg",
+      "images/2025-05-03/photo29.jpg",
+      "images/2025-05-03/photo30.jpg",
+      "images/2025-05-03/photo31.jpg"
+    ]
+  },
+  {
+    date: "2025-04-29",
+    project: "2025-04-29",
+    photos: [
+      "images/2025-04-29/photo1.jpg",
+      "images/2025-04-29/photo2.jpg",
+      "images/2025-04-29/photo3.jpg",
+      "images/2025-04-29/photo4.jpg",
+      "images/2025-04-29/photo5.jpg",
+      "images/2025-04-29/photo6.jpg",
+      "images/2025-04-29/photo7.jpg",
+      "images/2025-04-29/photo8.jpg",
+      "images/2025-04-29/photo9.jpg",
+      "images/2025-04-29/photo10.jpg",
+      "images/2025-04-29/photo11.jpg",
+      "images/2025-04-29/photo12.jpg",
+      "images/2025-04-29/photo13.jpg",
+      "images/2025-04-29/photo14.jpg",
+      "images/2025-04-29/photo15.jpg",
+      "images/2025-04-29/photo16.jpg"
+    ]
+  }
+];
