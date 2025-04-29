@@ -94,6 +94,7 @@ h2 {
   }
 }
 
+/* 기존 topBtn 숨김 스타일 */
 #topBtn {
   position: fixed;
   bottom: 30px;
@@ -108,8 +109,42 @@ h2 {
   cursor: pointer;
   box-shadow: 0 2px 10px rgba(0,0,0,0.2);
   z-index: 1000;
+  transition: opacity 0.3s ease;
 }
+
+/* 스크롤 끝에 도달했을 때 나타나게 하는 클래스 */
+#topBtn.show {
+  display: block;
+  opacity: 1;
+}
+
 
 #topBtn:hover {
   background-color: #006be0;
 }
+
+.timeline {
+  max-width: 800px;
+  margin: 60px auto;
+  padding: 0 20px;
+}
+.timeline h2 {
+  font-size: 2rem;
+  margin-bottom: 16px;
+  color: #0a84ff;
+}
+.timeline ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.timeline li {
+  padding: 8px 0;
+  border-bottom: 1px solid #ddd;
+  font-size: 1rem;
+  color: #333;
+}
+.timeline li:last-child {
+  border-bottom: none;
+}
+

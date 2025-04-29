@@ -122,3 +122,20 @@ function openVideoModal(videoSrc) {
     modal.remove();
   });
 }
+
+// ─── Top 버튼 제어 ───────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const topBtn = document.getElementById('topBtn');
+
+  window.addEventListener('scroll', () => {
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+      topBtn.classList.add('show');
+    } else {
+      topBtn.classList.remove('show');
+    }
+  });
+
+  topBtn.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
