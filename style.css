@@ -90,7 +90,7 @@ h2 {
 
 @media (max-width: 600px) {
   .photos {
-    column-count: 1;
+    column-count: 2;
   }
 }
 
