@@ -35,8 +35,8 @@ main {
 /* 날짜 + 프로젝트 제목 */
 section {
   margin-bottom: 60px;
-  padding-bottom: 40px;
-  border-bottom: 2px solid #ddd;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #bbb;  /* 회색 좀 더 진하게 */
   opacity: 0;
   transform: translateY(20px);
   transition: all 0.6s ease-out;
