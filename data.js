@@ -1,5 +1,41 @@
 const projects = [
   {
+    date: "2025-04-21",
+    project: "부산 BIFC2",
+    photos: [
+      "images/2025-04-21/photo1.jpg",
+      "images/2025-04-21/photo2.jpg",
+      "images/2025-04-21/photo3.jpg",
+      "images/2025-04-21/photo4.jpg",
+      "images/2025-04-21/photo5.jpg",
+      "images/2025-04-21/photo6.jpg",
+      "images/2025-04-21/photo7.jpg",
+      "images/2025-04-21/photo8.jpg",
+      "images/2025-04-21/photo9.jpg",
+      "images/2025-04-21/photo10.jpg",
+      "images/2025-04-21/photo11.jpg",
+      "images/2025-04-21/photo12.jpg",
+      "images/2025-04-21/photo13.jpg",
+      "images/2025-04-21/photo14.jpg",
+      "images/2025-04-21/photo15.jpg"
+    ]
+  },
+  {
+    date: "2025-04-11",
+    project: "울산 신정동 공동주택",
+    photos: [
+      "images/2025-04-11/photo1.jpg",
+      "images/2025-04-11/photo2.jpg",
+      "images/2025-04-11/photo3.jpg",
+      "images/2025-04-11/photo4.jpg",
+      "images/2025-04-11/photo5.jpg",
+      "images/2025-04-11/photo6.jpg",
+      "images/2025-04-11/photo7.jpg",
+      "images/2025-04-11/photo8.jpg",
+      "images/2025-04-11/photo9.jpg"
+    ]
+  },
+  {
     date: "2025-03-18",
     project: "김해 신문 1지구 현장",
     photos: [
@@ -11,17 +47,7 @@ const projects = [
       "images/2025-03-18/photo6.jpg",
       "images/2025-03-18/photo7.jpg",
       "images/2025-03-18/photo8.jpg",
-      "images/2025-03-18/photo9.jpg",
-      "images/2025-03-18/photo10.jpg",
-      "images/2025-03-18/photo11.jpg",
-      "images/2025-03-18/photo12.jpg",
-      "images/2025-03-18/photo13.jpg",
-      "images/2025-03-18/photo14.jpg",
-      "images/2025-03-18/photo15.jpg",
-      "images/2025-03-18/photo16.jpg",
-      "images/2025-03-18/photo17.jpg",
-      "images/2025-03-18/photo18.jpg",
-      "images/2025-03-18/photo19.jpg"
+      "images/2025-03-18/photo9.jpg"
     ]
   },
   {
@@ -36,16 +62,7 @@ const projects = [
       "images/2024-12-31/photo6.jpg",
       "images/2024-12-31/photo7.jpg",
       "images/2024-12-31/photo8.jpg",
-      "images/2024-12-31/photo9.jpg",
-      "images/2024-12-31/photo10.jpg",
-      "images/2024-12-31/photo11.jpg",
-      "images/2024-12-31/photo12.jpg",
-      "images/2024-12-31/photo13.jpg",
-      "images/2024-12-31/photo14.jpg",
-      "images/2024-12-31/photo15.jpg",
-      "images/2024-12-31/photo16.jpg",
-      "images/2024-12-31/photo17.jpg",
-      "images/2024-12-31/photo18.jpg"
+      "images/2024-12-31/photo9.jpg"
     ]
   },
   {

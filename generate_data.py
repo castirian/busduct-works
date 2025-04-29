@@ -1,4 +1,5 @@
 import os
+import re
 from PIL import Image, ExifTags
 
 def resize_image(path, max_width=1600):
@@ -26,9 +27,23 @@ def resize_image(path, max_width=1600):
 
         img.save(path, optimize=True, quality=85)
 
+def load_existing_projects(data_js_path="data.js"):
+    existing_projects = {}
+    if os.path.exists(data_js_path):
+        try:
+            with open(data_js_path, "r", encoding="utf-8") as f:
+                content = f.read()
+                matches = re.findall(r'date:\s*\"(.*?)\"\s*,\s*project:\s*\"(.*?)\"', content)
+                for date, project in matches:
+                    existing_projects[date] = project
+        except Exception as e:
+            print(f"❗ data.js 읽기 실패: {e}")
+    return existing_projects
+
 def generate_data(images_base="images", output_file="data.js"):
     project_entries = []
     allowed_exts = [".jpg", ".jpeg", ".png", ".mp4", ".webm"]
+    existing_projects = load_existing_projects(output_file)
 
     for folder in sorted(os.listdir(images_base), reverse=True):
         folder_path = os.path.join(images_base, folder)
@@ -61,10 +76,11 @@ def generate_data(images_base="images", output_file="data.js"):
             idx += 1
 
         if photos:
+            project_name = existing_projects.get(folder, "")  # 기존 project 유지 or 공란
             entry = (
                 "  {\n"
                 f"    date: \"{folder}\",\n"
-                f"    project: \"\",\n"  # ❗ project는 공란으로 둠
+                f"    project: \"{project_name}\",\n"
                 f"    photos: [\n      {',\n      '.join(photos)}\n    ]\n"
                 "  }"
             )
@@ -75,7 +91,7 @@ def generate_data(images_base="images", output_file="data.js"):
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(js_content)
 
-    print(f"✅ data.js 파일이 생성되었습니다! (project는 건드리지 않음)")
+    print("✅ data.js 생성 완료 (기존 프로젝트명 유지, 신규는 공란)")
 
 if __name__ == "__main__":
     generate_data()
