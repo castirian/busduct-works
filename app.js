@@ -127,13 +127,29 @@ function openVideoModal(videoSrc) {
 document.addEventListener('DOMContentLoaded', () => {
   const topBtn = document.getElementById('topBtn');
 
-  window.addEventListener('scroll', () => {
-    if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+  function checkBottom() {
+    // 문서 전체 높이
+    const docHeight = Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight,
+      document.body.offsetHeight,
+      document.documentElement.offsetHeight,
+      document.body.clientHeight,
+      document.documentElement.clientHeight
+    );
+    // 현재 스크롤 위치 (상단에서 얼만큼)
+    const scrollPosition = window.pageYOffset + window.innerHeight;
+    // 바닥에서 50px 남았을 때부터 show
+    if (scrollPosition >= docHeight - 50) {
       topBtn.classList.add('show');
     } else {
       topBtn.classList.remove('show');
     }
-  });
+  }
+
+  window.addEventListener('scroll', checkBottom);
+  window.addEventListener('resize', checkBottom);
+  checkBottom(); // 초기 검사
 
   topBtn.addEventListener('click', () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
