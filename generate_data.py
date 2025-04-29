@@ -30,6 +30,7 @@ def resize_image(path, max_width=1600):
 
 def generate_data(images_base="images", output_file="data.js"):
     project_entries = []
+    allowed_exts = [".jpg", ".jpeg", ".png", ".mp4", ".webm"]  # 동영상 확장자 추가
 
     for folder in sorted(os.listdir(images_base), reverse=True):
         folder_path = os.path.join(images_base, folder)
@@ -38,22 +39,30 @@ def generate_data(images_base="images", output_file="data.js"):
 
         photos = []
         files = sorted(os.listdir(folder_path))
-        for idx, filename in enumerate(files, start=1):
+        idx = 1
+        for filename in files:
             ext = os.path.splitext(filename)[1].lower()
-            if ext not in [".jpg", ".jpeg", ".png"]:
+            if ext not in allowed_exts:
                 continue
+
             new_name = f"photo{idx}{ext}"
             old_path = os.path.join(folder_path, filename)
             new_path = os.path.join(folder_path, new_name)
 
             # 파일 이름 변경
             if filename != new_name:
-                os.rename(old_path, new_path)
-            
-            # 리사이징 추가
-            resize_image(new_path)
+                if not os.path.exists(new_path):
+                    os.rename(old_path, new_path)
+                else:
+                    print(f"⚠️ {new_name} 이미 존재함. 건너뜀.")
+                    continue
+
+            # 이미지 파일만 리사이징
+            if ext in [".jpg", ".jpeg", ".png"]:
+                resize_image(new_path)
 
             photos.append(f"\"{images_base}/{folder}/{new_name}\"")
+            idx += 1
 
         if photos:
             entry = (
