@@ -32,7 +32,7 @@
     <button id="login">로그인</button>
     <button id="logout" style="display:none">로그아웃</button>
   </div>
-  <h1>🔥 Firebase Board 🔥</h1>
+  <h1>🔥 Firebase_Board 🔥</h1>
   <div id="postList"></div>
   <div id="pagination" class="pagination"></div>
   <form id="postForm" style="display:none" class="card">
@@ -74,8 +74,9 @@
       document.getElementById('login').style.display  = user ? 'none' : 'inline-block';
       document.getElementById('logout').style.display = user ? 'inline-block' : 'none';
       document.getElementById('postForm').style.display = user ? 'block' : 'none';
-         // 로그인 전·후 구분 없이 항상 게시글 목록을 불러옵니다
-      loadPosts(1);
+        // ← 여기서만 초기 로드
+       loadPosts(1);
+      
     });
 
     // 글 작성
@@ -300,7 +301,7 @@ window.addComment    = addComment;
 window.deleteComment = deleteComment;
 window.deletePost    = deletePost;
 
-    loadPosts(1);
+    
   </script>
 </body>
 </html>
