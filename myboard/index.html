@@ -47,7 +47,7 @@
     <button id="login">로그인</button>
     <button id="logout" style="display:none">로그아웃</button>
   </div>
-  <h1>🔥 Firebase_Board 🔥</h1>
+  <h1>🔥 Firebase_Board 🔥</h1> 
   <div id="postList"></div>
   <div id="pagination" class="pagination"></div>
   <form id="postForm" style="display:none" class="card">
@@ -130,6 +130,46 @@
       }
     };
 
+    async function getTotalPosts() {
+  const snap = await getDocs(collection(db, 'posts'));
+  return snap.size;
+}
+
+function renderPagination(currentPage, totalPosts) {
+  const totalPages  = Math.ceil(totalPosts / perPage);
+  const windowSize  = 4;
+  const windowStart = Math.floor((currentPage - 1) / windowSize) * windowSize + 1;
+  const windowEnd   = Math.min(windowStart + windowSize - 1, totalPages);
+
+  const pg = document.getElementById('pagination');
+  pg.innerHTML = '';
+
+  // ◀ 이전 블럭
+  if (windowStart > 1) {
+    const b = document.createElement('button');
+    b.textContent = '<';
+    b.onclick = () => loadPosts(windowStart - 1);
+    pg.appendChild(b);
+  }
+
+  // 숫자 버튼
+  for (let i = windowStart; i <= windowEnd; i++) {
+    const b = document.createElement('button');
+    b.textContent = i;
+    if (i === currentPage) b.classList.add('active');
+    b.onclick = () => loadPosts(i);
+    pg.appendChild(b);
+  }
+
+  // ▶ 다음 블럭
+  if (windowEnd < totalPages) {
+    const b = document.createElement('button');
+    b.textContent = '>';
+    b.onclick = () => loadPosts(windowEnd + 1);
+    pg.appendChild(b);
+  }
+}
+
     // 게시글 리스트 (페이지네이션)
     async function loadPosts(page = 1) {
       const list = document.getElementById('postList');
@@ -162,7 +202,8 @@
         `;
         list.appendChild(div);
       }
-      renderPagination(page);
+      const totalPosts = await getTotalPosts();
+      renderPagination(page, totalPosts);
     }
 
 // 게시글 상세 하단 댓글 불러오기
