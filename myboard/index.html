@@ -121,7 +121,10 @@
     const storage = getStorage(app);
 
     let currentUser = null;
-
+    let userIP = '';
+    fetch('https://api.ipify.org?format=json')
+      .then(res => res.json())
+      .then(data => userIP = data.ip);
     const loginBtn = document.getElementById('login');
     const logoutBtn = document.getElementById('logout');
     const userInfo = document.getElementById('user');
@@ -158,8 +161,10 @@
         photoURL: currentUser.photoURL,
         attachments: fileURLs,
         createdAt: serverTimestamp()
+        ip: userIP  // ← 추가
       });
       form.reset();
+      loadPosts();  // ← 추가: 글 목록 갱신
     };
 
     const loadPosts = async () => {
