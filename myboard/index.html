@@ -282,7 +282,7 @@
       const isOwner = currentUser && (currentUser.uid === p.uid || currentUser.email === ADMIN_EMAIL);
       d.innerHTML = `
         <div class="card" onclick="event.stopPropagation()">
-          
+          <h3 id="post-title-${id}">${p.title}</h3>
           ${contentHtml}
           ${embedded.join('')}
           ${filesHtml}
@@ -302,11 +302,11 @@
     }
 
     // 이하 생략 없이 기타 기능 함수 포함
-    async function editPost(id) { const t = document.getElementById(`post-title-${id}`); const nt = prompt('제목 수정', t.textContent); if (nt) { await updateDoc(doc(db,'posts',id),{title:nt}); t.textContent = nt; } }
-    async function likePost(id) { await updateDoc(doc(db,'posts',id),{likes:increment(1)}); const e=document.getElementById(`like-count-${id}`); if(e) e.textContent=parseInt(e.textContent||'0')+1; }
-    async function addComment(id) { const i=document.getElementById(`comment-input-${id}`); if(!i.value.trim()) return; await addDoc(collection(db,'posts',id,'comments'),{text:i.value,author:currentUser.displayName,uid:currentUser.uid,createdAt:serverTimestamp()}); i.value=''; loadComments(id); }
+    async function editPost(id, event) { event.stopPropagation(); const t = document.getElementById(`post-title-${id}`); const nt = prompt('제목 수정', t.textContent); if (nt) { event.stopPropagation(); await updateDoc(doc(db,'posts',id),{title:nt}); t.textContent = nt; } }
+    async function likePost(id, event) { event.stopPropagation(); await updateDoc(doc(db,'posts',id),{likes:increment(1)}); const e=document.getElementById(`like-count-${id}`); if(e) e.textContent=parseInt(e.textContent||'0')+1; }
+    async function addComment(id, event) { event.stopPropagation(); const i=document.getElementById(`comment-input-${id}`); if(!i.value.trim()) return; await addDoc(collection(db,'posts',id,'comments'),{text:i.value,author:currentUser.displayName,uid:currentUser.uid,createdAt:serverTimestamp()}); i.value=''; loadComments(id); }
     async function deleteComment(pid,cid) { if(!confirm('댓글 삭제?')) return; await deleteDoc(doc(db,'posts',pid,'comments',cid)); loadComments(pid); }
-    async function deletePost(id) { if(!confirm('삭제?')) return; await deleteDoc(doc(db,'posts',id)); loadPosts(); }
+    async function deletePost(id, event) { event.stopPropagation(); if(!confirm('삭제?')) return; await deleteDoc(doc(db,'posts',id)); loadPosts(); }
     async function loadComments(pid) { const ul = document.getElementById(`comment-list-${pid}`); ul.innerHTML=''; const snap = await getDocs(query(collection(db,'posts',pid,'comments'),orderBy('createdAt'))); snap.forEach(d=>{ const {author,text,uid}=d.data(); const li=document.createElement('li'); li.className='comment-item'; const sp=document.createElement('span'); sp.textContent=`${author}: ${text}`; li.appendChild(sp); if(currentUser&&(currentUser.email===ADMIN_EMAIL||currentUser.uid===uid)){ const bt=document.createElement('button'); bt.textContent='🗑️'; bt.onclick=e=>{e.stopPropagation(); deleteComment(pid,d.id)}; li.appendChild(bt);} ul.appendChild(li); }); }
 
     loadPosts();
