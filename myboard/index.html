@@ -131,8 +131,8 @@
     };
 
     async function getTotalPosts() {
-  const snap = await getDocs(collection(db, 'posts'));
-  return snap.size;
+      const countSnap = await getCountFromServer(collection(db, 'posts'));
+      return countSnap.data().count;
 }
 
 function renderPagination(currentPage, totalPosts) {
