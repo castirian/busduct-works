@@ -6,28 +6,40 @@
   <title>🔥 게시판</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Noto Sans KR', sans-serif; background: #1e1e1e; color: #e5e7eb; max-width: 800px; margin: auto; padding: 20px; }
+    /* 기본 레이아웃 */
+    body { font-family: 'Noto Sans KR', sans-serif; background: #1e1e1e; color: #e5e7eb; max-width: 100%; margin: auto; padding: 10px; }
     .topbar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 10px; }
     .card { background: #2d2d2d; border-radius: 12px; padding: 20px; box-shadow: 0 4px 14px rgba(0,0,0,0.2); margin-bottom: 20px; }
     input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #555; border-radius: 8px; background: #1e1e1e; color: #e5e7eb; }
     button { background: #4f46e5; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
     button:hover { background: #6366f1; }
-    .post-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #444; }
-    .post-item .title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .post-item .comment-count { font-size: 0.8em; margin-left: 6px; background: #444; padding: 2px 6px; border-radius: 12px; vertical-align: super; }
-    .post-item .meta { display: flex; align-items: center; gap: 16px; font-size: 0.9em; color: #aaa; margin-left: 10px; }
-    .post-item .meta .post-date { /* unchanged font-size */ }
-    .post-item .meta .author { /* unchanged */ }
-    .post-item .meta .views { /* unchanged */ }
+
+    /* 글 목록 */
+    .post-item { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid #444; }
+    .post-item .title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 1em; }
+    .post-item .comment-count { font-size: 0.8em; margin-left: 4px; background: #444; padding: 2px 6px; border-radius: 12px; vertical-align: super; }
+    .post-item .meta { display: flex; align-items: center; gap: 8px; color: #aaa; margin-left: 10px; }
+    .post-item .meta .author { font-size: 0.6em; }
+    .post-item .meta .post-date { font-size: 0.6em; }
+    .post-item .meta .views { font-size: 0.5em; }
+
+    /* 상세창 메타 숨김 */
+    .detail .card p { display: none; }
+
+    /* 중앙 정렬 */
     .centered { display: flex; justify-content: center; margin-top: 10px; }
-    .uploading { text-align: center; color: #facc15; margin-bottom: 10px; }
-    .pagination { display: flex; justify-content: center; gap: 8px; margin: 20px 0; }
-    iframe, video { width: 100%; margin-top: 10px; }
-    img.uploaded-img { max-width: 100%; margin-top: 10px; border-radius: 8px; }
     .post-actions { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
     .comment-section { display: flex; flex-direction: column; align-items: center; margin-top: 10px; }
     .comment-section ul { list-style: none; padding: 0; width: 100%; }
     .comment-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
+
+    /* 반응형 모바일 */
+    @media (max-width: 600px) {
+      .post-item .title { font-size: 1em; }
+      .post-item .meta .author, .post-item .meta .post-date { font-size: 0.5em; }
+      .post-item .meta .views { font-size: 0.4em; }
+      .post-actions, .comment-section { justify-content: center; }
+    }
   </style>
 </head>
 <body>
@@ -43,9 +55,9 @@
 
   <form id="postForm" style="display:none" class="card">
     <input name="title" placeholder="제목 입력" required>
-    <textarea name="content" rows="4" placeholder="내용 입력 (YouTube 링크는 https://www.youtube.com/watch?v=영상ID)" required></textarea>
+    <textarea name="content" rows="4" placeholder="내용 입력" required></textarea>
     <input type="file" name="files" multiple>
-    <div class="uploading" id="uploadStatus" style="display:none;">업로드 중입니다...</div>
+    <div class="uploading" id="uploadStatus" style="display:none;">업로드 중...</div>
     <div class="centered"><button type="submit">글 작성</button></div>
   </form>
 
@@ -55,106 +67,162 @@
     import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
-    const firebaseConfig = { apiKey: "AIzaSyC6RvL8x2EQrgy8aSc8R63fzRvg85fX32w", authDomain: "my-board-project-58b71.firebaseapp.com", projectId: "my-board-project-58b71", storageBucket: "my-board-project-58b71.firebasestorage.app", messagingSenderId: "720342019721", appId: "1:720342019721:web:910184dbb03e4451b1e058" };
+    const firebaseConfig = { apiKey: "...", authDomain: "...", projectId: "...", storageBucket: "...", messagingSenderId: "...", appId: "..." };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
     const storage = getStorage(app);
 
-    let currentUser = null;
-    let allPosts = [];
-    let currentPage = 1;
-    const perPage = 20;
-    let lastOpenedDetail = null;
+    let currentUser = null, allPosts = [], currentPage = 1, perPage = 20, lastOpenedDetail = null;
     const ADMIN_EMAIL = 'castirian@gmail.com';
 
-    document.getElementById('login').onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
-    document.getElementById('logout').onclick = () => signOut(auth);
+    // 인증 상태 처리
+    const loginBtn = document.getElementById('login');
+    const logoutBtn = document.getElementById('logout');
     onAuthStateChanged(auth, user => {
       currentUser = user;
       document.getElementById('user').textContent = user ? `👤 ${user.displayName}` : '로그인 필요';
-      document.getElementById('login').style.display = user ? 'none' : 'inline-block';
-      document.getElementById('logout').style.display = user ? 'inline-block' : 'none';
+      loginBtn.style.display = user ? 'none' : 'inline-block';
+      logoutBtn.style.display = user ? 'inline-block' : 'none';
       document.getElementById('postForm').style.display = user ? 'block' : 'none';
     });
+    loginBtn.onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+    logoutBtn.onclick = () => signOut(auth);
 
+    // 글 작성
     document.getElementById('postForm').onsubmit = async e => {
       e.preventDefault();
-      const status = document.getElementById('uploadStatus');
-      status.style.display = 'block';
+      document.getElementById('uploadStatus').style.display = 'block';
       try {
-        const title = e.target.title.value;
-        const content = e.target.content.value;
+        const { title, content } = e.target;
         const files = e.target.files.files;
-        const fileURLs = [];
-        for (const file of files) {
-          const storageRef = ref(storage, `uploads/${Date.now()}-${file.name}`);
-          const snap = await uploadBytes(storageRef, file);
-          fileURLs.push({ name: file.name, url: await getDownloadURL(snap.ref) });
+        const attachments = [];
+        for (const f of files) {
+          const storageRef = ref(storage, `uploads/${Date.now()}-${f.name}`);
+          const snap = await uploadBytes(storageRef, f);
+          attachments.push({ name: f.name, url: await getDownloadURL(snap.ref) });
         }
-        await addDoc(collection(db,'posts'),{ title, content, uid:currentUser.uid, username:currentUser.displayName, photoURL:currentUser.photoURL, attachments:fileURLs, likes:0, views:0, createdAt:serverTimestamp() });
+        await addDoc(collection(db, 'posts'), {
+          title: title.value,
+          content: content.value,
+          uid: currentUser.uid,
+          username: currentUser.displayName,
+          photoURL: currentUser.photoURL,
+          attachments,
+          likes: 0,
+          views: 0,
+          createdAt: serverTimestamp()
+        });
         e.target.reset();
         await loadPosts();
-      } catch (err) { console.error(err); alert('오류 발생'); }
-      finally { status.style.display = 'none'; }
+      } catch (err) {
+        console.error(err);
+        alert('글 작성 중 오류 발생');
+      } finally {
+        document.getElementById('uploadStatus').style.display = 'none';
+      }
     };
 
+    // 게시글 로드
     async function loadPosts() {
-      const snap = await getDocs(query(collection(db,'posts'),orderBy('createdAt','desc')));
+      const snap = await getDocs(query(collection(db, 'posts'), orderBy('createdAt', 'desc')));
       allPosts = [];
       for (const d of snap.docs) {
-        const data = { id:d.id, ...d.data() };
-        const comments = await getDocs(collection(db,'posts',d.id,'comments'));
+        const data = { id: d.id, ...d.data() };
+        const comments = await getDocs(collection(db, 'posts', d.id, 'comments'));
         data.commentCount = comments.size;
         allPosts.push(data);
       }
       renderPage(1);
     }
 
+    // 페이지 렌더링
     function renderPage(page) {
       currentPage = page;
-      const list = document.getElementById('postList'); list.innerHTML = '';
-      allPosts.slice((page-1)*perPage, page*perPage).forEach(p => {
-        const dateStr = p.createdAt?.toDate().toLocaleString('en-US',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:true});
+      const list = document.getElementById('postList');
+      list.innerHTML = '';
+      const start = (page - 1) * perPage;
+      allPosts.slice(start, start + perPage).forEach(p => {
+        const dateStr = p.createdAt?.toDate().toLocaleString('en-US', {
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', hour12: true
+        });
         const div = document.createElement('div');
         div.className = 'post-item';
-        div.onclick = () => toggleDetail(div,p.id);
+        div.onclick = () => toggleDetail(div, p.id);
         div.innerHTML = `
           <div class="title">${p.title}<span class="comment-count">${p.commentCount}</span></div>
-          <div class="meta">
-            <span class="author">${p.username}</span>
-            <span class="post-date">${dateStr}</span>
-            <span class="views">${p.views||0}</span>
-          </div>
+          <div class="meta"><span class="author">${p.username}</span><span class="post-date">${dateStr}</span><span class="views">${p.views || 0}</span></div>
           <div class="detail" style="display:none"></div>
         `;
         list.appendChild(div);
       });
-      const pg = document.getElementById('pagination'); pg.innerHTML = '';
-      const total = Math.ceil(allPosts.length/perPage);
-      for (let i=1;i<=total;i++){ const btn = document.createElement('button'); btn.textContent=i; if(i===page) btn.classList.add('active'); btn.onclick=()=>renderPage(i); pg.appendChild(btn);}    }
+      const pg = document.getElementById('pagination');
+      pg.innerHTML = '';
+      const total = Math.ceil(allPosts.length / perPage);
+      for (let i = 1; i <= total; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        if (i === page) btn.classList.add('active');
+        btn.onclick = () => renderPage(i);
+        pg.appendChild(btn);
+      }
+    }
 
-    window.toggleDetail = async (wrapper,id) => {
-      const d = wrapper.querySelector('.detail');
-      if(lastOpenedDetail && lastOpenedDetail!==d){ lastOpenedDetail.style.display='none'; lastOpenedDetail.innerHTML=''; }
-      if(d.style.display==='block'){ d.style.display='none'; d.innerHTML=''; lastOpenedDetail=null; return; }
-      await updateDoc(doc(db,'posts',id),{views:increment(1)});
-      const snap = await getDoc(doc(db,'posts',id)); const p = snap.data();
-      const dateStr = p.createdAt?.toDate().toLocaleString('en-US',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:true});
-      const embedded =[]; const contentHtml = p.content.replace(/https:\/\/(www\.)?youtube\.com\/watch\?v=([\w-]+)/g,(m,_,vid)=>{ embedded.push(`<iframe height="315" src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe>`); return m; });
-      const filesHtml = p.attachments?.map(f=>f.name.match(/\.(jpe?g|png|gif)$/i)?`<img src="${f.url}" class="uploaded-img">`:f.name.match(/\.(mp4|webm)$/i)?`<video src="${f.url}" controls></video>`:`<a href="${f.url}" target="_blank">📎 ${f.name}</a>`).join('')||'';
-      const isOwner = currentUser && (currentUser.uid===p.uid||currentUser.email===ADMIN_EMAIL);
-      d.innerHTML = `
+    // 상세 보기
+    async function toggleDetail(wrapper, id) {
+      const detailDiv = wrapper.querySelector('.detail');
+      if (lastOpenedDetail && lastOpenedDetail !== detailDiv) {
+        lastOpenedDetail.style.display = 'none';
+        lastOpenedDetail.innerHTML = '';
+      }
+      if (detailDiv.style.display === 'block') {
+        detailDiv.style.display = 'none';
+        detailDiv.innerHTML = '';
+        lastOpenedDetail = null;
+        return;
+      }
+      await updateDoc(doc(db, 'posts', id), { views: increment(1) });
+      const snap = await getDoc(doc(db, 'posts', id));
+      const p = snap.data();
+      const dateStr = p.createdAt?.toDate().toLocaleString('en-US', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: true
+      });
+      const embedded = [];
+      const contentHtml = p.content.replace(/https:\/\/(www\.)?youtube\.com\/watch\?v=([\w-]+)/g,
+        (m, _, vid) => {
+          embedded.push(`<iframe height="315" src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe>`);
+          return m;
+        });
+      const filesHtml = p.attachments?.map(f => f.name.match(/\.(jpe?g|png|gif)$/i)
+        ? `<img src="${f.url}" class="uploaded-img">`
+        : f.name.match(/\.(mp4|webm)$/i)
+          ? `<video src="${f.url}" controls></video>`
+          : `<a href="${f.url}" target="_blank">📎 ${f.name}</a>`
+      ).join('') || '';
+      const isOwner = currentUser && (currentUser.uid === p.uid || currentUser.email === ADMIN_EMAIL);
+      detailDiv.innerHTML = `
         <div class="card" onclick="event.stopPropagation()">
-          <p><img src="${p.photoURL}" class="avatar"> ${p.username} <small class="post-date">${dateStr}</small></p>
           <h3 id="post-title-${id}">${p.title}</h3>
-          <p id="post-content-${id}">${contentHtml}</p>${embedded.join('')}${filesHtml}
-          <div class="post-actions">${isOwner?`<button onclick="event.stopPropagation();window.editPost('${id}')">✏️ 수정</button><button onclick="event.stopPropagation();window.deletePost('${id}')">🗑️ 삭제</button>`:''}<button onclick="event.stopPropagation();window.likePost('${id}')">👍 좋아요 (<span id="like-count-${id}">${p.likes||0}</span>)</button></div>
-          <div class="comment-section"><input id="comment-input-${id}" type="text" placeholder="댓글 달기"><button onclick="event.stopPropagation();window.addComment('${id}')">댓글 작성</button><ul id="comment-list-${id}"></ul></div>
-        </div>`;
+          <p id="post-content-${id}">${contentHtml}</p>
+          ${embedded.join('')}
+          ${filesHtml}
+          <div class="post-actions">
+            ${isOwner ? `<button onclick="event.stopPropagation(); editPost('${id}')">✏️ 수정</button><button onclick="event.stopPropagation(); deletePost('${id}')">🗑️ 삭제</button>` : ''}
+            <button onclick="event.stopPropagation(); likePost('${id}')">👍 (<span id="like-count-${id}">${p.likes || 0}</span>)</button>
+          </div>
+          <div class="comment-section">
+            <input id="comment-input-${id}" type="text" placeholder="댓글 달기">
+            <button onclick="event.stopPropagation(); addComment('${id}')">댓글 작성</button>
+            <ul id="comment-list-${id}"></ul>
+          </div>
+        </div>
+      `;
       loadComments(id);
-      d.style.display='block'; lastOpenedDetail=d;
-    };
+      detailDiv.style.display = 'block';
+      lastOpenedDetail = detailDiv;
+    }
 
     window.editPost = async id=>{ const t=document.getElementById(`post-title-${id}`); const c=document.getElementById(`post-content-${id}`); const nt=prompt('제목 수정',t.textContent); const nc=prompt('내용 수정',c.textContent); if(nt&&nc){ await updateDoc(doc(db,'posts',id),{title:nt,content:nc}); t.textContent=nt; c.textContent=nc;} };
     window.likePost = async id=>{ await updateDoc(doc(db,'posts',id),{likes:increment(1)}); const e=document.getElementById(`like-count-${id}`); if(e) e.textContent=parseInt(e.textContent||'0')+1; };
