@@ -38,6 +38,11 @@
         width: 100%;
       }
     .comment-item { display: flex; justify-content: space-between; padding: 4px 0; }
+
+        /* 글 내용 줄바꿈 보존 */
+    div[id^="post-content-"] {
+      white-space: pre-wrap;
+    }
   </style>
   <link rel="icon" href="favicon.ico" />
 </head>
