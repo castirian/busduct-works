@@ -24,6 +24,7 @@
     .comment-section { margin-top: 10px; }
     .comment-item { display: flex; justify-content: space-between; padding: 4px 0; }
   </style>
+  <link rel="icon" href="favicon.ico" />
 </head>
 <body>
   <div class="topbar">
@@ -145,6 +146,29 @@
       }
       renderPagination(page);
     }
+    
+// 게시글 상세 하단 댓글 불러오기
+async function loadComments(postId) {
+    const listEl = document.getElementById(`comment-list-${postId}`);
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    // 댓글 컬렉션에서 createdAt 순 정렬 후 불러오기
+    const q = query(
+      collection(db, 'posts', postId, 'comments'),
+      orderBy('createdAt')
+    );
+    const snapshot = await getDocs(q);
+    snapshot.forEach(docC => {
+      const data = docC.data();
+      const li = document.createElement('li');
+      li.className = 'comment-item';
+      li.innerHTML = `<span>${data.author}: ${data.text}</span>`;
+      listEl.appendChild(li);
+    });
+  }
+  // inline onclick 등에서 참조할 수 있도록 전역에 노출
+  window.loadComments = loadComments;
 
     function renderPagination(currentPage) {
       const total = Math.ceil(/* 전체 게시물 수 구하는 로직 */ 100 / perPage);
