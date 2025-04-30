@@ -229,18 +229,6 @@ async function loadComments(postId) {
   // inline onclick 등에서 참조할 수 있도록 전역에 노출
   window.loadComments = loadComments;
 
-    function renderPagination(currentPage) {
-      const total = Math.ceil(/* 전체 게시물 수 구하는 로직 */ 100 / perPage);
-      const pg = document.getElementById('pagination');
-      pg.innerHTML = '';
-      for (let i = 1; i <= total; i++) {
-        const btn = document.createElement('button');
-        btn.textContent = i;
-        if (i === currentPage) btn.classList.add('active');
-        btn.onclick = () => loadPosts(i);
-        pg.appendChild(btn);
-      }
-    }
 
     // 상세 보기
      async function toggleDetail(wrapper, id) {
