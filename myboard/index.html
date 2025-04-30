@@ -146,7 +146,7 @@
       }
       renderPagination(page);
     }
-    
+
 // 게시글 상세 하단 댓글 불러오기
 async function loadComments(postId) {
     const listEl = document.getElementById(`comment-list-${postId}`);
@@ -240,7 +240,11 @@ async function loadComments(postId) {
     }
 
     // 이하 editPost, likePost(1회 제한), addComment, deleteComment, deletePost, loadComments 함수는 기존과 동일하게 유지
-
+      // 전역에 노출
+      window.editPost = editPost;
+      window.deletePost = deletePost;
+      window.likePost = likePost;
+      window.addComment = addComment;
     loadPosts(1);
   </script>
 </body>
