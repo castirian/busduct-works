@@ -59,11 +59,15 @@
   </form>
 
   <script type="module">
-    let lastOpenedDetail = null; 
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getFirestore, collection, addDoc, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp, orderBy, query, limit, startAfter, increment, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
+  // ② 모듈 코드 – 여기부터 자유롭게 변수/함수 선언
+  let lastOpenedDetail = null;
+  const pageCursors = {};
+
 
     const firebaseConfig = {
       apiKey: "AIzaSyC6RvL8x2EQrgy8aSc8R63fzRvg85fX32w",
@@ -183,9 +187,12 @@ function renderPagination(currentPage, totalPosts) {
       orderBy('createdAt', 'desc'),
       limit(perPage)
     ));
-  } else {
-    // 이전 페이지 커서가 없으면 재귀로 채우기
-    if (!pageCursors[page - 1]) {
+  }  else {
+    // 이전 페이지 cursor
+    const cursor = pageCursors[page - 1];
+    console.log(`Loading page ${page}, using cursor:`, cursor);
+    if (!cursor) {
+      // 이전 페이지 한 번 채워줘야 다음 커서가 설정됩니다.
       await loadPosts(page - 1);
     }
     const lastDoc = pageCursors[page - 1];
