@@ -73,13 +73,14 @@
     }
     .post-item .meta {
       display: flex;
-      align-items: center;
-      gap: 16px;
-      color: #aaa;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
       margin-left: 10px;
+      color: #aaa;
     }
     .post-item .meta .author {
-      font-size: 0.6em;
+      font-size: calc(0.6em + 1pt);
     }
     .post-item .meta .post-date {
       font-size: 0.6em;
@@ -88,7 +89,8 @@
       font-size: 0.5em;
     }
 
-    /* 상세창에서 메타 정보 숨김 */
+    /* 상세창에서 메타 정보 완전 제거 */
+    .detail .card h3 + p,
     .detail .card p {
       display: none;
     }
@@ -186,7 +188,15 @@
     import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
-    const firebaseConfig = { apiKey: "AIzaSyC6RvL8x2EQrgy8aSc8R63fzRvg85fX32w", authDomain: "my-board-project-58b71.firebaseapp.com", projectId: "my-board-project-58b71", storageBucket: "my-board-project-58b71.firebasestorage.app", messagingSenderId: "720342019721", appId: "1:720342019721:web:910184dbb03e4451b1e058" };
+    const firebaseConfig = {
+      apiKey: "AIzaSyC6RvL8x2EQrgy8aSc8R63fzRvg85fX32w",
+      authDomain: "my-board-project-58b71.firebaseapp.com",
+      projectId: "my-board-project-58b71",
+      storageBucket: "my-board-project-58b71.firebasestorage.app",
+      messagingSenderId: "720342019721",
+      appId: "1:720342019721:web:910184dbb03e4451b1e058"
+    };
+
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
@@ -211,26 +221,25 @@
 
     document.getElementById('postForm').onsubmit = async e => {
       e.preventDefault();
-      const status = document.getElementById('uploadStatus');
-      status.style.display = 'block';
+      document.getElementById('uploadStatus').style.display = 'block';
       try {
         const title = e.target.title.value;
         const content = e.target.content.value;
         const files = e.target.files.files;
-        const fileURLs = [];
-        for (const file of files) {
-          const storageRef = ref(storage, `uploads/${Date.now()}-${file.name}`);
-          const snap = await uploadBytes(storageRef, file);
-          fileURLs.push({ name: file.name, url: await getDownloadURL(snap.ref) });
+        const attachments = [];
+        for (const f of files) {
+          const r = ref(storage, `uploads/${Date.now()}-${f.name}`);
+          const s = await uploadBytes(r, f);
+          attachments.push({ name: f.name, url: await getDownloadURL(s.ref) });
         }
-        await addDoc(collection(db, 'posts'), { title, content, uid: currentUser.uid, username: currentUser.displayName, photoURL: currentUser.photoURL, attachments: fileURLs, likes: 0, views: 0, createdAt: serverTimestamp() });
+        await addDoc(collection(db, 'posts'), { title, content, uid: currentUser.uid, username: currentUser.displayName, photoURL: currentUser.photoURL, attachments, likes: 0, views: 0, createdAt: serverTimestamp() });
         e.target.reset();
         await loadPosts();
-      } catch (err) {
-        console.error(err);
+      } catch (error) {
+        console.error(error);
         alert('오류 발생');
       } finally {
-        status.style.display = 'none';
+        document.getElementById('uploadStatus').style.display = 'none';
       }
     };
 
@@ -275,32 +284,52 @@
 
     async function toggleDetail(wrapper, id) {
       const d = wrapper.querySelector('.detail');
-      if (lastOpenedDetail && lastOpenedDetail !== d) { lastOpenedDetail.style.display = 'none'; lastOpenedDetail.innerHTML = ''; }
-      if (d.style.display === 'block') { d.style.display = 'none'; d.innerHTML = ''; lastOpenedDetail = null; return; }
+      if (lastOpenedDetail && lastOpenedDetail !== d) {
+        lastOpenedDetail.style.display = 'none';
+        lastOpenedDetail.innerHTML = '';
+      }
+      if (d.style.display === 'block') {
+        d.style.display = 'none';
+        d.innerHTML = '';
+        lastOpenedDetail = null;
+        return;
+      }
       await updateDoc(doc(db, 'posts', id), { views: increment(1) });
       const snap = await getDoc(doc(db, 'posts', id)); const p = snap.data();
       const dateStr = p.createdAt?.toDate().toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true });
-      const embedded = []; const contentHtml = p.content.replace(/https:\/\/(www\.)?youtube\.com\/watch\?v=([\w-]+)/g, (m, _, vid) => { embedded.push(`<iframe height="315" src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe>`); return m; });
+      const embedded = [];
+      const contentHtml = p.content.replace(/https:\/\/(www\.)?youtube\.com\/watch\?v=([\w-]+)/g,
+        (m, _, vid) => { embedded.push(`<iframe height="315" src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe>`); return m; });
       const filesHtml = p.attachments?.map(f => f.name.match(/\.(jpe?g|png|gif)$/i) ? `<img src="${f.url}" class="uploaded-img">` : f.name.match(/\.(mp4|webm)$/i) ? `<video src="${f.url}" controls></video>` : `<a href="${f.url}" target="_blank">📎 ${f.name}</a>`).join('') || '';
       const isOwner = currentUser && (currentUser.uid === p.uid || currentUser.email === ADMIN_EMAIL);
       d.innerHTML = `
         <div class="card" onclick="event.stopPropagation()">
           <h3 id="post-title-${id}">${p.title}</h3>
-          <p id="post-content-${id}">${contentHtml}</p>${embedded.join('')}${filesHtml}
-          <div class="post-actions">${isOwner ? `<button onclick="event.stopPropagation(); editPost('${id}')">✏️ 수정</button><button onclick="event.stopPropagation(); deletePost('${id}')">🗑️ 삭제</button>` : ''}<button onclick="event.stopPropagation(); likePost('${id}')">👍 (<span id="like-count-${id}">${p.likes || 0}</span>)</button></div>
-          <div class="comment-section"><input id="comment-input-${id}" type="text" placeholder="댓글 달기"><button onclick="event.stopPropagation(); addComment('${id}')">댓글 작성</button><ul id="comment-list-${id}"></ul></div>
+          ${contentHtml}
+          ${embedded.join('')}
+          ${filesHtml}
+          <div class="post-actions">
+            ${isOwner ? `<button onclick="event.stopPropagation(); editPost('${id}')">✏️ 수정</button><button onclick="event.stopPropagation(); deletePost('${id}')">🗑️ 삭제</button>` : ''}
+            <button onclick="event.stopPropagation(); likePost('${id}')">👍 (<span id="like-count-${id}">${p.likes || 0}</span>)</button>
+          </div>
+          <div class="comment-section">
+            <input id="comment-input-${id}" type="text" placeholder="댓글 달기">
+            <button onclick="event.stopPropagation(); addComment('${id}')">댓글 작성</button>
+            <ul id="comment-list-${id}"></ul>
+          </div>
         </div>`;
       loadComments(id);
-      d.style.display = 'block'; lastOpenedDetail = d;
+      d.style.display = 'block';
+      lastOpenedDetail = d;
     }
 
-    // 기타 함수(editPost, likePost, addComment, deleteComment, deletePost, loadComments) 생략없이 포함
-    async function editPost(id) { const t = document.getElementById(`post-title-${id}`); const c = document.getElementById(`post-content-${id}`); const nt = prompt('제목 수정', t.textContent); const nc = prompt('내용 수정', c.textContent); if (nt && nc) { await updateDoc(doc(db,'posts',id),{title:nt,content:nc}); t.textContent = nt; c.textContent = nc; } }
+    // 이하 생략 없이 기타 기능 함수 포함
+    async function editPost(id) { const t = document.getElementById(`post-title-${id}`); const nt = prompt('제목 수정', t.textContent); if (nt) { await updateDoc(doc(db,'posts',id),{title:nt}); t.textContent = nt; } }
     async function likePost(id) { await updateDoc(doc(db,'posts',id),{likes:increment(1)}); const e=document.getElementById(`like-count-${id}`); if(e) e.textContent=parseInt(e.textContent||'0')+1; }
     async function addComment(id) { const i=document.getElementById(`comment-input-${id}`); if(!i.value.trim()) return; await addDoc(collection(db,'posts',id,'comments'),{text:i.value,author:currentUser.displayName,uid:currentUser.uid,createdAt:serverTimestamp()}); i.value=''; loadComments(id); }
     async function deleteComment(pid,cid) { if(!confirm('댓글 삭제?')) return; await deleteDoc(doc(db,'posts',pid,'comments',cid)); loadComments(pid); }
     async function deletePost(id) { if(!confirm('삭제?')) return; await deleteDoc(doc(db,'posts',id)); loadPosts(); }
-    async function loadComments(pid) { const ul = document.getElementById(`comment-list-${pid}`); ul.innerHTML=''; const snap = await getDocs(query(collection(db,'posts',pid,'comments'),orderBy('createdAt'))); snap.forEach(d=>{ const {author,text,uid}=d.data(); const li = document.createElement('li'); li.className='comment-item'; const sp=document.createElement('span'); sp.textContent=`${author}: ${text}`; li.appendChild(sp); if(currentUser&&(currentUser.email===ADMIN_EMAIL||currentUser.uid===uid)){ const bt=document.createElement('button'); bt.textContent='🗑️'; bt.onclick=e=>{e.stopPropagation(); deleteComment(pid,d.id)}; li.appendChild(bt);} ul.appendChild(li); }); }
+    async function loadComments(pid) { const ul = document.getElementById(`comment-list-${pid}`); ul.innerHTML=''; const snap = await getDocs(query(collection(db,'posts',pid,'comments'),orderBy('createdAt'))); snap.forEach(d=>{ const {author,text,uid}=d.data(); const li=document.createElement('li'); li.className='comment-item'; const sp=document.createElement('span'); sp.textContent=`${author}: ${text}`; li.appendChild(sp); if(currentUser&&(currentUser.email===ADMIN_EMAIL||currentUser.uid===uid)){ const bt=document.createElement('button'); bt.textContent='🗑️'; bt.onclick=e=>{e.stopPropagation(); deleteComment(pid,d.id)}; li.appendChild(bt);} ul.appendChild(li); }); }
 
     loadPosts();
   </script>
