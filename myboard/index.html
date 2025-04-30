@@ -346,6 +346,11 @@ window.toggleDetail = async (wrapper, id) => {
       input.value = '';
       loadComments(postId);
     };
+          window.deletePost = async (id) => {
+        if (!confirm('정말 삭제할까요?')) return;
+        await deleteDoc(doc(db, 'posts', id));
+        await loadPosts();
+      };
 
     async function loadComments(postId) {
       const list = document.getElementById(`comment-list-${postId}`);
