@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🔥 확장형 Firebase 게시판</title>
+  <title>🔥 게시판</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
   <style>
     body {
@@ -14,6 +14,13 @@
       margin: auto;
       padding: 20px;
     }
+    .topbar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
     .card {
       background: white;
       border-radius: 12px;
@@ -22,38 +29,75 @@
       margin-bottom: 20px;
     }
     input, textarea {
-      width: 100%; padding: 10px; margin-bottom: 10px;
-      border: 1px solid #ccc; border-radius: 8px;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
     }
     button {
-      background: #6366f1; color: white;
-      padding: 10px 16px; border: none;
-      border-radius: 8px; cursor: pointer;
+      background: #6366f1;
+      color: white;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
       font-weight: bold;
     }
     button:hover { background: #4f46e5; }
-    img.preview { max-width: 100%; margin-top: 10px; border-radius: 8px; }
-    .file-list { margin-top: 10px; font-size: 0.9em; }
-    .file-list a { display: block; margin-bottom: 4px; color: #2563eb; text-decoration: underline; }
-    .comment { margin-top: 8px; padding-left: 12px; border-left: 3px solid #ccc; }
-    .small-btn { font-size: 0.8em; background: #ddd; color: #333; margin-left: 4px; }
-    .avatar { width: 24px; height: 24px; border-radius: 50%; vertical-align: middle; margin-right: 8px; }
+
+    #postForm button[type="submit"] {
+      display: block;
+      margin: 20px auto 0;
+    }
+
+    .avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    .comment {
+      margin-top: 8px;
+      padding-left: 12px;
+      border-left: 3px solid #ccc;
+    }
   </style>
+</head>
+<body>
+  <div class="topbar">
+    <p id="user">로그인 상태 확인 중...</p>
+    <button id="login">로그인</button>
+    <button id="logout" style="display:none">로그아웃</button>
+  </div>
+
+  <h1>🔥 확장형 Firebase 게시판</h1>
+
+  <form id="postForm" style="display:none" class="card">
+    <input name="title" placeholder="제목 입력" required>
+    <textarea name="content" rows="4" placeholder="내용 입력" required></textarea>
+    <input type="file" name="files" multiple>
+    <button type="submit">글 작성</button>
+  </form>
+
+  <div id="board"></div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, getDocs, updateDoc, deleteDoc, onSnapshot, serverTimestamp, orderBy, query, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, orderBy, query, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
-      const firebaseConfig = {
-    apiKey: "AIzaSyC6RvL8x2EQrgy8aSc8R63fzRvg85fX32w",
-    authDomain: "my-board-project-58b71.firebaseapp.com",
-    projectId: "my-board-project-58b71",
-    storageBucket: "my-board-project-58b71.appspot.com",
-    messagingSenderId: "720342019721",
-    appId: "1:720342019721:web:910184dbb03e4451b1e058",
-    measurementId: "G-ZCVLPKLKZD"
-  };
+    const firebaseConfig = {
+      apiKey: "AIzaSyC6RvL8x2EQrgy8aSc8R63fzRvg85fX32w",
+      authDomain: "my-board-project-58b71.firebaseapp.com",
+      projectId: "my-board-project-58b71",
+      storageBucket: "my-board-project-58b71.appspot.com",
+      messagingSenderId: "720342019721",
+      appId: "1:720342019721:web:910184dbb03e4451b1e058",
+      measurementId: "G-ZCVLPKLKZD"
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -198,20 +242,5 @@
       });
     };
   </script>
-</head>
-<body>
-  <h1>🔥 확장형 Firebase 게시판</h1>
-  <p id="user">로그인 상태 확인 중...</p>
-  <button id="login">로그인</button>
-  <button id="logout" style="display:none">로그아웃</button>
-
-  <form id="postForm" style="display:none" class="card">
-    <input name="title" placeholder="제목 입력" required>
-    <textarea name="content" rows="4" placeholder="내용 입력" required></textarea>
-    <input type="file" name="files" multiple>
-    <button type="submit">글 작성</button>
-  </form>
-
-  <div id="board"></div>
 </body>
 </html>
