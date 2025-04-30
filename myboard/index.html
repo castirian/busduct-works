@@ -43,6 +43,7 @@
   </form>
 
   <script type="module">
+    let lastOpenedDetail = null; 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getFirestore, collection, addDoc, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp, orderBy, query, limit, increment } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
