@@ -61,7 +61,7 @@
   <script type="module">
     let lastOpenedDetail = null; 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp, orderBy, query, limit, increment, getCountFromServer, offset } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp, orderBy, query, limit, startAfter, increment, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
@@ -172,47 +172,57 @@ function renderPagination(currentPage, totalPosts) {
 
     // 게시글 리스트 (페이지네이션)
     async function loadPosts(page = 1) {
-      const list = document.getElementById('postList');
-      list.innerHTML = '';
+  const list = document.getElementById('postList');
+  list.innerHTML = '';
 
-            // 1) offset 계산
-      const skip = (page - 1) * perPage;
-
-      const snap = await getDocs(query(
-        collection(db, 'posts'),
-        orderBy('createdAt', 'desc'),
-        offset(skip),
-        limit(perPage)
-      ));
-
-
-
-      for (const d of snap.docs) {
-        const p = d.data();
-                // ① 실제 댓글 개수 구하기
-        const comSnap = await getDocs(collection(db, 'posts', d.id, 'comments'));
-        const commentCount = comSnap.size;        
-        const dateStr = p.createdAt?.toDate().toLocaleString();
-        const div = document.createElement('div');
-        div.className = 'post-item';
-        div.onclick = () => toggleDetail(div, d.id);
-        div.innerHTML = `
-          <div class="title">
-            ${p.title}
-            <span class="comment-count">${commentCount}</span>
-          </div>
-          <div class="meta">
-            <span class="author">${p.username}</span>
-            <span class="post-date">${dateStr}</span>
-            <span class="views">${p.views}</span>
-          </div>
-          <div class="detail" style="display:none"></div>
-        `;
-        list.appendChild(div);
-      }
-      const totalPosts = await getTotalPosts();
-      renderPagination(page, totalPosts);
+  let snap;
+  if (page === 1) {
+    // 첫 페이지: 단순 limit
+    snap = await getDocs(query(
+      collection(db, 'posts'),
+      orderBy('createdAt', 'desc'),
+      limit(perPage)
+    ));
+  } else {
+    // 이전 페이지 커서가 없으면 재귀로 채우기
+    if (!pageCursors[page - 1]) {
+      await loadPosts(page - 1);
     }
+    const lastDoc = pageCursors[page - 1];
+    snap = await getDocs(query(
+      collection(db, 'posts'),
+      orderBy('createdAt', 'desc'),
+      startAfter(lastDoc),
+      limit(perPage)
+    ));
+  }
+
+  // 이 페이지의 마지막 문서를 커서로 저장
+  if (snap.docs.length) {
+    pageCursors[page] = snap.docs[snap.docs.length - 1];
+  }
+
+  // 렌더링
+  for (const d of snap.docs) {
+    const p = d.data();
+    const comSnap = await getDocs(collection(db, 'posts', d.id, 'comments'));
+    const commentCount = comSnap.size;
+    const dateStr = p.createdAt?.toDate().toLocaleString();
+    const div = document.createElement('div');
+    div.className = 'post-item';
+    div.onclick = () => toggleDetail(div, d.id);
+    div.innerHTML = `
+      <div class="title">${p.title}<span class="comment-count">${commentCount}</span></div>
+      <div class="meta"><span class="author">${p.username}</span><span class="post-date">${dateStr}</span><span class="views">${p.views}</span></div>
+      <div class="detail" style="display:none"></div>
+    `;
+    list.appendChild(div);
+  }
+
+  // 전체 개수 집계로 페이징 버튼
+  const totalPosts = await getCountFromServer(collection(db, 'posts')).then(s => s.data().count);
+  renderPagination(page, totalPosts);
+}
 
 // 게시글 상세 하단 댓글 불러오기
 async function loadComments(postId) {
