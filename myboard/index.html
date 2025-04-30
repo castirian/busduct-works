@@ -315,12 +315,47 @@ async function loadComments(postId) {
 async function editPost(id) {
   const titleEl   = document.getElementById(`post-title-${id}`);
   const contentEl = document.getElementById(`post-content-${id}`);
-  const newTitle   = prompt('제목 수정', titleEl.textContent);
-  const newContent = prompt('내용 수정', contentEl.textContent);
-  if (newTitle === null || newContent === null) return;
-  await updateDoc(doc(db,'posts',id), { title: newTitle, content: newContent });
-  titleEl.textContent   = newTitle;
-  contentEl.textContent = newContent;
+
+  // 1) 기존 콘텐츠 숨기기
+  titleEl.style.display   = 'none';
+  contentEl.style.display = 'none';
+
+  // 2) 편집용 폼 컨테이너 생성
+  const editDiv = document.createElement('div');
+  editDiv.innerHTML = `
+    <input id="edit-title-${id}" type="text" value="${titleEl.textContent}" style="width:100%;margin-bottom:6px;padding:4px;" />
+    <textarea id="edit-content-${id}" rows="6" style="width:100%;padding:4px;">${contentEl.textContent}</textarea>
+    <div style="text-align:right;margin-top:6px;">
+      <button id="save-btn-${id}">저장</button>
+      <button id="cancel-btn-${id}">취소</button>
+    </div>
+  `;
+  // insert after contentEl
+  contentEl.parentNode.insertBefore(editDiv, contentEl.nextSibling);
+
+  // 3) 취소 버튼 핸들러
+  document.getElementById(`cancel-btn-${id}`).onclick = () => {
+    editDiv.remove();
+    titleEl.style.display   = '';
+    contentEl.style.display = '';
+  };
+
+  // 4) 저장 버튼 핸들러
+  document.getElementById(`save-btn-${id}`).onclick = async () => {
+    const newTitle   = document.getElementById(`edit-title-${id}`).value;
+    const newContent = document.getElementById(`edit-content-${id}`).value;
+    // Firestore 업데이트
+    await updateDoc(doc(db,'posts',id), {
+      title:   newTitle,
+      content: newContent
+    });
+    // 화면 반영 및 정리
+    titleEl.textContent   = newTitle;
+    contentEl.textContent = newContent;
+    editDiv.remove();
+    titleEl.style.display   = '';
+    contentEl.style.display = '';
+  };
 }
 
 // 좋아요 1회 제한
