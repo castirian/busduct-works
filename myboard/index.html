@@ -32,7 +32,7 @@
     <button id="login">로그인</button>
     <button id="logout" style="display:none">로그아웃</button>
   </div>
-  <h1>🔥 Firebase board</h1>
+  <h1>🔥 Firebase board 🔥</h1>
   <div id="postList"></div>
   <div id="pagination" class="pagination"></div>
   <form id="postForm" style="display:none" class="card">
@@ -245,6 +245,8 @@ async function loadComments(postId) {
       window.deletePost = deletePost;
       window.likePost = likePost;
       window.addComment = addComment;
+      window.deleteComment = deleteComment;
+      window.loadComments = loadComments;
     loadPosts(1);
   </script>
 </body>
