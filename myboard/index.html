@@ -14,7 +14,7 @@
       margin: auto;
       padding: 20px;
     }
-    a { color: #93c5fd; text-decoration: underline; }
+    a { color: #93c5fd; text-decoration: underline; cursor: pointer; }
     .topbar {
       display: flex;
       justify-content: flex-end;
@@ -55,27 +55,36 @@
       vertical-align: middle;
       margin-right: 8px;
     }
-    .comment {
-      margin-top: 8px;
-      padding-left: 12px;
-      border-left: 3px solid #555;
-    }
-    .post-list {
-      margin-top: 40px;
-    }
     .post-item {
       border-bottom: 1px solid #444;
       padding: 12px 0;
-    }
-    .post-item a {
-      color: #60a5fa;
-      font-weight: bold;
-      cursor: pointer;
     }
     .centered {
       display: flex;
       justify-content: center;
       margin-top: 10px;
+    }
+    .uploading {
+      text-align: center;
+      color: #facc15;
+      margin-bottom: 10px;
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 20px 0;
+    }
+    .pagination button {
+      background: #374151;
+      color: #e5e7eb;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .pagination button.active {
+      background: #6366f1;
     }
   </style>
 </head>
@@ -86,15 +95,16 @@
     <button id="logout" style="display:none">로그아웃</button>
   </div>
 
-  <h1>🔥 Firebase_board</h1>
+  <h1>🔥 Firebase 게시판</h1>
 
-  <div class="post-list" id="postList"></div>
-  <div id="postDetail"></div>
+  <div id="postList"></div>
+  <div id="pagination"></div>
 
   <form id="postForm" style="display:none" class="card">
     <input name="title" placeholder="제목 입력" required>
     <textarea name="content" rows="4" placeholder="내용 입력" required></textarea>
     <input type="file" name="files" multiple>
+    <div class="uploading" id="uploadStatus" style="display:none;">업로드 중입니다...</div>
     <div class="centered">
       <button type="submit">글 작성</button>
     </div>
@@ -102,7 +112,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, serverTimestamp, orderBy, query } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, getDocs, deleteDoc, serverTimestamp, orderBy, query, limit, startAfter } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
@@ -121,12 +131,17 @@
     const storage = getStorage(app);
 
     let currentUser = null;
+    let allPosts = [];
+    let currentPage = 1;
+    const perPage = 20;
 
     const loginBtn = document.getElementById('login');
     const logoutBtn = document.getElementById('logout');
     const userInfo = document.getElementById('user');
     const form = document.getElementById('postForm');
     const postList = document.getElementById('postList');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const pagination = document.getElementById('pagination');
 
     loginBtn.onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
     logoutBtn.onclick = () => signOut(auth);
@@ -141,43 +156,68 @@
 
     form.onsubmit = async e => {
       e.preventDefault();
-      const title = form.title.value;
-      const content = form.content.value;
-      const files = form.files.files;
-      const fileURLs = [];
-      for (const file of files) {
-        const storageRef = ref(storage, `uploads/${Date.now()}-${file.name}`);
-        const snapshot = await uploadBytes(storageRef, file);
-        const url = await getDownloadURL(snapshot.ref);
-        fileURLs.push({ name: file.name, url });
+      try {
+        uploadStatus.style.display = 'block';
+        const title = form.title.value;
+        const content = form.content.value;
+        const files = form.files.files;
+        const fileURLs = [];
+        for (const file of files) {
+          const storageRef = ref(storage, `uploads/${Date.now()}-${file.name}`);
+          const snapshot = await uploadBytes(storageRef, file);
+          const url = await getDownloadURL(snapshot.ref);
+          fileURLs.push({ name: file.name, url });
+        }
+        await addDoc(collection(db, 'posts'), {
+          title, content,
+          uid: currentUser.uid,
+          username: currentUser.displayName,
+          photoURL: currentUser.photoURL,
+          attachments: fileURLs,
+          createdAt: serverTimestamp()
+        });
+        form.reset();
+        await loadPosts();
+      } catch (err) {
+        console.error("글 작성 오류:", err);
+        alert("글 작성 중 오류가 발생했습니다.");
+      } finally {
+        uploadStatus.style.display = 'none';
       }
-      await addDoc(collection(db, 'posts'), {
-        title, content,
-        uid: currentUser.uid,
-        username: currentUser.displayName,
-        photoURL: currentUser.photoURL,
-        attachments: fileURLs,
-        createdAt: serverTimestamp()
-      });
-      form.reset();
-      loadPosts();  // ← 추가: 글 목록 갱신
     };
 
     const loadPosts = async () => {
       const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
       const snap = await getDocs(q);
+      allPosts = [];
+      snap.forEach(docSnap => allPosts.push({ id: docSnap.id, ...docSnap.data() }));
+      renderPage(1);
+    };
+
+    const renderPage = (page) => {
+      currentPage = page;
       postList.innerHTML = '';
-      snap.forEach(docSnap => {
-        const p = docSnap.data();
-        const id = docSnap.id;
+      pagination.innerHTML = '';
+      const start = (page - 1) * perPage;
+      const pagePosts = allPosts.slice(start, start + perPage);
+      pagePosts.forEach(p => {
+        const createdAt = p.createdAt?.toDate?.().toLocaleString() || '';
         const div = document.createElement('div');
         div.className = 'post-item';
         div.innerHTML = `
-          <a onclick="toggleDetail(this, '${id}')">${p.title}</a> - ${p.username} <small>${p.createdAt?.toDate().toLocaleString?.() || ''}</small>
+          <a onclick="toggleDetail(this, '${p.id}')">${p.title}</a> - ${p.username} <small>${createdAt}</small>
           <div class="detail" style="display:none"></div>
         `;
         postList.appendChild(div);
       });
+      const totalPages = Math.ceil(allPosts.length / perPage);
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        if (i === page) btn.classList.add('active');
+        btn.onclick = () => renderPage(i);
+        pagination.appendChild(btn);
+      }
     };
 
     window.toggleDetail = async (el, id) => {
@@ -190,12 +230,13 @@
       const ref = doc(db, 'posts', id);
       const snap = await getDoc(ref);
       const p = snap.data();
+      const createdAt = p.createdAt?.toDate?.().toLocaleString() || '';
       detailDiv.innerHTML = `
         <div class="card">
-          <p><img src="${p.photoURL}" class="avatar"> ${p.username}</p>
+          <p><img src="${p.photoURL}" class="avatar"> ${p.username} <small>${createdAt}</small></p>
           <h3>${p.title}</h3>
           <p>${p.content}</p>
-          ${p.attachments?.map(f => `<a href="${f.url}" target="_blank">📎 ${f.name}</a>`).join('') || ''}<br>
+          ${p.attachments?.map(f => `<a href="${f.url}" target="_blank">📎 ${f.name}</a>`).join('') || ''}
         </div>
       `;
       detailDiv.style.display = 'block';
