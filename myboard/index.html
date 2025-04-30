@@ -1,140 +1,218 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>로컬 게시판</title>
+  <title>🔥 확장형 Firebase 게시판</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg: #f9fafb;
-      --card: #ffffff;
-      --primary: #6366f1;
-      --text: #111827;
-      --radius: 12px;
-      --shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
-    }
-
     body {
       font-family: 'Noto Sans KR', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      margin: 0;
-      padding: 40px 20px;
+      background: #f9fafb;
+      color: #111827;
       max-width: 800px;
-      margin-inline: auto;
-    }
-
-    h1 {
-      font-size: 2rem;
-      margin-bottom: 24px;
-    }
-
-    .card {
-      background: var(--card);
-      border-radius: var(--radius);
+      margin: auto;
       padding: 20px;
-      box-shadow: var(--shadow);
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.06);
       margin-bottom: 20px;
     }
-
-    .card h2 {
-      margin: 0 0 12px;
-      font-size: 1.25rem;
+    input, textarea {
+      width: 100%; padding: 10px; margin-bottom: 10px;
+      border: 1px solid #ccc; border-radius: 8px;
     }
-
-    .card p {
-      margin: 0 0 12px;
-    }
-
-    .comments {
-      margin-top: 12px;
-      padding-left: 12px;
-      border-left: 2px solid var(--primary);
-    }
-
-    textarea, input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 12px;
-      border: 1px solid #ccc;
-      border-radius: var(--radius);
-    }
-
     button {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: var(--radius);
-      cursor: pointer;
+      background: #6366f1; color: white;
+      padding: 10px 16px; border: none;
+      border-radius: 8px; cursor: pointer;
       font-weight: bold;
     }
-
-    button:hover {
-      background: #4f46e5;
-    }
+    button:hover { background: #4f46e5; }
+    img.preview { max-width: 100%; margin-top: 10px; border-radius: 8px; }
+    .file-list { margin-top: 10px; font-size: 0.9em; }
+    .file-list a { display: block; margin-bottom: 4px; color: #2563eb; text-decoration: underline; }
+    .comment { margin-top: 8px; padding-left: 12px; border-left: 3px solid #ccc; }
+    .small-btn { font-size: 0.8em; background: #ddd; color: #333; margin-left: 4px; }
+    .avatar { width: 24px; height: 24px; border-radius: 50%; vertical-align: middle; margin-right: 8px; }
   </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, getDocs, updateDoc, deleteDoc, onSnapshot, serverTimestamp, orderBy, query, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
+
+      const firebaseConfig = {
+    apiKey: "AIzaSyC6RvL8x2EQrgy8aSc8R63fzRvg85fX32w",
+    authDomain: "my-board-project-58b71.firebaseapp.com",
+    projectId: "my-board-project-58b71",
+    storageBucket: "my-board-project-58b71.firebasestorage.app",
+    messagingSenderId: "720342019721",
+    appId: "1:720342019721:web:910184dbb03e4451b1e058",
+    measurementId: "G-ZCVLPKLKZD"
+  };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const storage = getStorage(app);
+    const analytics = getAnalytics(app);
+    
+    let currentUser = null;
+
+    const loginBtn = document.getElementById('login');
+    const logoutBtn = document.getElementById('logout');
+    const userInfo = document.getElementById('user');
+    const form = document.getElementById('postForm');
+    const board = document.getElementById('board');
+
+    loginBtn.onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
+    logoutBtn.onclick = () => signOut(auth);
+
+    onAuthStateChanged(auth, user => {
+      currentUser = user;
+      userInfo.textContent = user ? `👤 ${user.displayName}` : '로그인 필요';
+      loginBtn.style.display = user ? 'none' : 'inline-block';
+      logoutBtn.style.display = user ? 'inline-block' : 'none';
+      form.style.display = user ? 'block' : 'none';
+    });
+
+    form.onsubmit = async e => {
+      e.preventDefault();
+      const title = form.title.value;
+      const content = form.content.value;
+      const files = form.files.files;
+      const fileURLs = [];
+      for (const file of files) {
+        const storageRef = ref(storage, `uploads/${Date.now()}-${file.name}`);
+        await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(storageRef);
+        fileURLs.push({ name: file.name, url });
+      }
+      await addDoc(collection(db, 'posts'), {
+        title, content,
+        uid: currentUser.uid,
+        username: currentUser.displayName,
+        photoURL: currentUser.photoURL,
+        attachments: fileURLs,
+        likes: [],
+        reports: [],
+        createdAt: serverTimestamp()
+      });
+      form.reset();
+    };
+
+    const renderPosts = async () => {
+      const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+      onSnapshot(q, snapshot => {
+        board.innerHTML = '';
+        snapshot.forEach(docSnap => {
+          const p = docSnap.data();
+          const id = docSnap.id;
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `
+            <p><img src="${p.photoURL}" class="avatar"> ${p.username}</p>
+            <h3 contenteditable="false" id="title-${id}">${p.title}</h3>
+            <p contenteditable="false" id="content-${id}">${p.content}</p>
+            ${p.attachments?.map(f => `<a href="${f.url}" target="_blank">📎 ${f.name}</a>`).join('')}
+            <p>
+              <button onclick="likePost('${id}')">👍 ${p.likes?.length || 0}</button>
+              <button onclick="reportPost('${id}')">🚨 ${p.reports?.length || 0}</button>
+              ${currentUser && currentUser.uid === p.uid ? `
+                <button onclick="editPost('${id}')">✏️</button>
+                <button onclick="deletePost('${id}')">🗑️</button>` : ''}
+            </p>
+            <div class="comment">
+              <input type="text" placeholder="댓글 입력" onkeydown="if(event.key==='Enter')commentPost('${id}', this)">
+              <ul id="comments-${id}"></ul>
+            </div>
+          `;
+          board.appendChild(div);
+          loadComments(id);
+        });
+      });
+    };
+    renderPosts();
+
+    window.likePost = async id => {
+      const ref = doc(db, 'posts', id);
+      const post = await getDoc(ref);
+      const data = post.data();
+      const update = data.likes.includes(currentUser.uid) ? arrayRemove(currentUser.uid) : arrayUnion(currentUser.uid);
+      await updateDoc(ref, { likes: update });
+    };
+
+    window.reportPost = async id => {
+      const ref = doc(db, 'posts', id);
+      await updateDoc(ref, { reports: arrayUnion(currentUser.uid) });
+    };
+
+    window.editPost = async id => {
+      const titleEl = document.getElementById(`title-${id}`);
+      const contentEl = document.getElementById(`content-${id}`);
+      if (titleEl.isContentEditable) {
+        await updateDoc(doc(db, 'posts', id), {
+          title: titleEl.textContent,
+          content: contentEl.textContent
+        });
+        titleEl.contentEditable = false;
+        contentEl.contentEditable = false;
+      } else {
+        titleEl.contentEditable = true;
+        contentEl.contentEditable = true;
+        titleEl.focus();
+      }
+    };
+
+    window.deletePost = async id => {
+      if (confirm('정말 삭제할까요?')) {
+        await deleteDoc(doc(db, 'posts', id));
+      }
+    };
+
+    window.commentPost = async (postId, el) => {
+      const text = el.value.trim();
+      if (!text) return;
+      await addDoc(collection(db, `posts/${postId}/comments`), {
+        content: text,
+        username: currentUser.displayName,
+        createdAt: serverTimestamp()
+      });
+      el.value = '';
+    };
+
+    const loadComments = async postId => {
+      const q = query(collection(db, `posts/${postId}/comments`), orderBy('createdAt'));
+      const ul = document.getElementById(`comments-${postId}`);
+      onSnapshot(q, snap => {
+        ul.innerHTML = '';
+        snap.forEach(doc => {
+          const c = doc.data();
+          const li = document.createElement('li');
+          li.textContent = `${c.username}: ${c.content}`;
+          ul.appendChild(li);
+        });
+      });
+    };
+  </script>
 </head>
 <body>
-  <h1>로컬 게시판</h1>
-  <div class="card">
-    <input type="text" id="title" placeholder="제목을 입력하세요">
-    <textarea id="content" rows="4" placeholder="내용을 입력하세요"></textarea>
-    <button onclick="addPost()">작성하기</button>
-  </div>
+  <h1>🔥 확장형 Firebase 게시판</h1>
+  <p id="user">로그인 상태 확인 중...</p>
+  <button id="login">로그인</button>
+  <button id="logout" style="display:none">로그아웃</button>
+
+  <form id="postForm" style="display:none" class="card">
+    <input name="title" placeholder="제목 입력" required>
+    <textarea name="content" rows="4" placeholder="내용 입력" required></textarea>
+    <input type="file" name="files" multiple>
+    <button type="submit">글 작성</button>
+  </form>
 
   <div id="board"></div>
-
-  <script>
-    const boardEl = document.getElementById('board');
-
-            function loadPosts() {
-        boardEl.innerHTML = '';
-        const posts = JSON.parse(localStorage.getItem('posts') || '[]');
-        posts.reverse().forEach((post, idx) => {
-            const el = document.createElement('div');
-            el.className = 'card';
-            el.innerHTML = `
-            <h2>${post.title}</h2>
-            <p>${post.content}</p>
-            <div class="comments">
-                <strong>댓글:</strong>
-                <ul>
-                ${(post.comments || []).map(c => `<li>${c}</li>`).join('')}
-                </ul>
-                <input type="text" placeholder="댓글 입력..." onkeydown="if(event.key==='Enter')addComment(${posts.length - 1 - idx}, this)">
-            </div>
-            `;
-            boardEl.appendChild(el);
-        });
-        }
-
-
-    function addPost() {
-      const title = document.getElementById('title').value;
-      const content = document.getElementById('content').value;
-      if (!title || !content) return alert('제목과 내용을 입력하세요');
-      const posts = JSON.parse(localStorage.getItem('posts') || '[]');
-      posts.push({ title, content, comments: [] });
-      localStorage.setItem('posts', JSON.stringify(posts));
-      document.getElementById('title').value = '';
-      document.getElementById('content').value = '';
-      loadPosts();
-    }
-
-    function addComment(postIdx, inputEl) {
-      const text = inputEl.value;
-      if (!text) return;
-      const posts = JSON.parse(localStorage.getItem('posts') || '[]');
-      posts[postIdx].comments = posts[postIdx].comments || [];
-      posts[postIdx].comments.push(text);
-      localStorage.setItem('posts', JSON.stringify(posts));
-      inputEl.value = '';
-      loadPosts();
-    }
-
-    loadPosts();
-  </script>
 </body>
 </html>
