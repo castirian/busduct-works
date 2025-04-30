@@ -32,7 +32,7 @@
     <button id="login">로그인</button>
     <button id="logout" style="display:none">로그아웃</button>
   </div>
-  <h1>🔥 Firebase board 🔥</h1>
+  <h1>🔥 Firebase Board 🔥</h1>
   <div id="postList"></div>
   <div id="pagination" class="pagination"></div>
   <form id="postForm" style="display:none" class="card">
@@ -74,6 +74,8 @@
       document.getElementById('login').style.display  = user ? 'none' : 'inline-block';
       document.getElementById('logout').style.display = user ? 'inline-block' : 'none';
       document.getElementById('postForm').style.display = user ? 'block' : 'none';
+         // 로그인 전·후 구분 없이 항상 게시글 목록을 불러옵니다
+      loadPosts(1);
     });
 
     // 글 작성
@@ -239,14 +241,65 @@ async function loadComments(postId) {
         lastOpenedDetail = detail;
     }
 
-    // 이하 editPost, likePost(1회 제한), addComment, deleteComment, deletePost, loadComments 함수는 기존과 동일하게 유지
-      // 전역에 노출
-      window.editPost = editPost;
-      window.deletePost = deletePost;
-      window.likePost = likePost;
-      window.addComment = addComment;
-      window.deleteComment = deleteComment;
-      window.loadComments = loadComments;
+// 수정 기능 (제목+내용)
+async function editPost(id) {
+  const titleEl   = document.getElementById(`post-title-${id}`);
+  const contentEl = document.getElementById(`post-content-${id}`);
+  const newTitle   = prompt('제목 수정', titleEl.textContent);
+  const newContent = prompt('내용 수정', contentEl.textContent);
+  if (newTitle === null || newContent === null) return;
+  await updateDoc(doc(db,'posts',id), { title: newTitle, content: newContent });
+  titleEl.textContent   = newTitle;
+  contentEl.textContent = newContent;
+}
+
+// 좋아요 1회 제한
+async function likePost(id) {
+  if (!currentUser) { alert('로그인 후 이용해주세요.'); return; }
+  const likeRef = doc(db, 'posts', id, 'likes', currentUser.uid);
+  const likeSnap = await getDoc(likeRef);
+  if (likeSnap.exists()) { alert('이미 좋아요를 누르셨습니다.'); return; }
+  await setDoc(likeRef, { uid: currentUser.uid, createdAt: serverTimestamp() });
+  await updateDoc(doc(db, 'posts', id), { likes: increment(1) });
+  const e = document.getElementById(`like-count-${id}`);
+  if (e) e.textContent = parseInt(e.textContent||'0')+1;
+}
+
+// 댓글 쓰기
+async function addComment(id) {
+  const i = document.getElementById(`comment-input-${id}`);
+  if (!i.value.trim()) return;
+  await addDoc(collection(db,'posts',id,'comments'), {
+    text: i.value,
+    author: currentUser.displayName,
+    uid: currentUser.uid,
+    createdAt: serverTimestamp()
+  });
+  i.value = '';
+  loadComments(id);
+}
+
+// 댓글 삭제
+async function deleteComment(pid, cid) {
+  if (!confirm('댓글 삭제?')) return;
+  await deleteDoc(doc(db,'posts',pid,'comments',cid));
+  loadComments(pid);
+}
+
+// 글 삭제
+async function deletePost(id) {
+  if (!confirm('삭제하시겠습니까?')) return;
+  await deleteDoc(doc(db,'posts',id));
+  loadPosts(1);
+}
+
+// 전역 노출
+window.editPost      = editPost;
+window.likePost      = likePost;
+window.addComment    = addComment;
+window.deleteComment = deleteComment;
+window.deletePost    = deletePost;
+
     loadPosts(1);
   </script>
 </body>
