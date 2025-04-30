@@ -103,23 +103,46 @@ a:hover { color: var(--accent); }
 .timeline li:last-child { margin-bottom: 0; }
 
 /* ── Gallery Grid Cards ─────────────────────────────── */
-.photos { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 48px; }
-.photos a {
-  position: relative;
-  display: block;
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: var(--glass-bg);
-  box-shadow: var(--shadow-soft);
-  transition: transform var(--transition), box-shadow var(--transition);
+.photos { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 6px; margin-bottom: 48px; 
+  /* Masonry 스타일 추가 */
+  grid-template-rows: masonry;
+
 }
+.photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 6px; /* 사진 간격 원하는대로 조정 */
+  margin-bottom: 48px;
+}
+.photos a {
+  display: block;
+  width: 100%;
+  background: none !important;
+  padding: 0;
+  margin: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.photos img {
+  display: block;
+  width: 100%;
+  height: auto;
+  vertical-align: top;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+}
+
 .photos a:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-medium);
 }
+
 .photos a img,
 .photos a video {
-  width: 100%; height: auto; display: block;
+  width: 100%;
+  height: auto;
+  display: block;
   filter: brightness(0.95);
 }
 
@@ -150,3 +173,4 @@ html[data-theme="light"] {
   --primary: #6366f1;
 }
 /* ────────────────────────────────────────────────────── */
+

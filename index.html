@@ -1,53 +1,91 @@
-<!DOCTYPE html>
-<html lang="ko" data-theme="light">
+ㅗ<!DOCTYPE html>
+<html lang="ko" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>부스덕트 포트폴리오</title>
   <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightbox2@2/dist/css/lightbox.min.css"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightbox2@2/dist/css/lightbox.min.css" />
+  <!-- 인라인 스타일을 외부 CSS로 이동 -->
 </head>
 <body>
 
-  <!-- A. Hero 섹션 -->
   <header class="hero">
     <div class="hero-content">
       <h1>부스덕트 작업 포트폴리오</h1>
       <p class="subtitle">년도별 설치 사진 모음</p>
-      <button id="themeToggle" aria-label="다크 모드 토글">🌙</button>
     </div>
   </header>
 
-  <!-- B. 필터 바 -->
-  <div class="filter-bar">
-    <button class="ripple active" data-filter="all">전체 보기</button>
-    <button class="ripple"      data-filter="2024">2024년</button>
-    <button class="ripple"      data-filter="2023">2023년</button>
-  </div>
+  <nav class="filter-bar">
+    <button class="filter-btn ripple active" data-filter="all">전체 보기</button>
+    <button class="filter-btn ripple" data-filter="2025">2025년</button>
+    <button class="filter-btn ripple" data-filter="2024">2024년</button>
+  </nav>
 
-  <!-- C. 타임라인 (컨테이너 적용) -->
   <section class="timeline container">
     <h2>프로젝트 타임라인</h2>
-    <ul>
-      <li>2025년 04월 — 부산 BIFC2</li>
-      <li>2025년 04월 — 울산 신정동 공동주택</li>
-      <li>2025년 03월 — 김해 신문 1지구 현장</li>
-      <li>2024년 12월 — 부산 명지지구 아파텔 5BL, 6BL</li>
-      <li>2024년 11월 — 대구 신세계 빌리브루센트</li>
-      <li>2024년 10월 — 인천 시티오 씨엘 4단지</li>
-      <li>2024년 09월 — 강원 힐스테이트 원주 레스티지</li>
+    <ul class="timeline-list">
+      <li>2025년 04월 - 부산 BIFC2</li>
+      <li>2025년 04월 - 울산 신정동 공동주택</li>
+      <li>2025년 03월 - 김해 신문 1지구 현장</li>
+      <li>2024년 12월 - 부산 명지지구 아파텔 5BL, 6BL</li>
+      <li>2024년 11월 - 대구 신세계 빌리브루센트</li>
+      <li>2024년 10월 - 인천 시티오 씨엘 4단지</li>
+      <li>2024년 09월 - 강원 힐스테이트 원주 레스티지</li>
     </ul>
   </section>
 
-  <!-- D. 포트폴리오 갤러리 (컨테이너 적용) -->
-  <main id="portfolio" class="container"></main>
+  <main id="portfolio" class="container">
+    <!-- 동적으로 내용이 채워질 공간 -->
+  </main>
 
-  <!-- TOP 버튼 -->
-  <button id="topBtn" aria-label="맨 위로">TOP</button>
+  <button id="topBtn" class="back-to-top" aria-label="맨 위로 이동">TOP</button>
 
-  <script src="data.js" defer></script>
-  <script src="app.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/lightbox2@2/dist/js/lightbox-plus-jquery.min.js" defer></script>
+  <!-- 스크립트 로딩 순서 최적화 -->
+  <script src="https://cdn.jsdelivr.net/npm/lightbox2@2/dist/js/lightbox-plus-jquery.min.js"></script>
+  <script src="https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js"></script>
+  <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Masonry 초기화 함수 개선
+      const initMasonry = (grid) => {
+        // grid-sizer가 이미 있는지 확인하여 중복 방지
+        if (!grid.querySelector('.grid-sizer')) {
+          const sizer = document.createElement('div');
+          sizer.classList.add('grid-sizer');
+          grid.prepend(sizer);
+        }
+        
+        // 이미지가 모두 로드된 후 Masonry 초기화
+        imagesLoaded(grid, () => {
+          new Masonry(grid, {
+            itemSelector: '.grid-item',
+            columnWidth: '.grid-sizer',
+            gutter: 4,
+            percentPosition: true
+          });
+        });
+      };
+      
+      // portfolio 컨테이너의 변화 감지
+      const observer = new MutationObserver((mutations) => {
+        document.querySelectorAll('.photos').forEach(initMasonry);
+      });
+      
+      // 관찰 시작
+      observer.observe(document.getElementById('portfolio'), { 
+        childList: true, 
+        subtree: true 
+      });
+    });
+  </script>
+
 </body>
 </html>
