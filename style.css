@@ -54,8 +54,9 @@ a:hover { color: var(--accent); }
   margin-top: 12px;
   opacity: 0.9;
 }
-#themeToggle { position: absolute; top: 24px; right: 24px; background: none; border: none; font-size: 1.75rem; cursor: pointer; color: white; }
-
+#themeToggle {
+  display: none !important;
+}
 /* ── Filter Bar ──────────────────────────────────────── */
 .filter-bar { display: flex; justify-content: center; gap: 16px; margin: 32px 0; }
 .filter-bar button {
@@ -140,7 +141,7 @@ section.visible { opacity: 1; transform: translateY(0); }
 #topBtn:hover { background: var(--primary); }
 
 /* ── Dark Mode ──────────────────────────────────────── */
-html[data-theme="dark"] {
+html[data-theme="light"] {
   --bg: #1f2937;
   --text: #e5e7eb;
   --muted: #9ca3af;
