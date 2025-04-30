@@ -15,6 +15,8 @@
     button:hover { background: #6366f1; }
     .avatar { width: 24px; height: 24px; border-radius: 50%; vertical-align: middle; margin-right: 8px; }
     .post-item { border-bottom: 1px solid #444; padding: 12px 0; cursor: pointer; }
+    .comment-count { font-size: 0.8em; margin-left: 6px; background: #444; padding: 2px 6px; border-radius: 12px; vertical-align: super; }
+    .post-date { font-size: 0.8em; margin-left: 6px; color: #aaa; }
     .centered { display: flex; justify-content: center; margin-top: 10px; }
     .uploading { text-align: center; color: #facc15; margin-bottom: 10px; }
     .pagination { display: flex; justify-content: center; gap: 8px; margin: 20px 0; }
@@ -22,7 +24,10 @@
     .pagination button.active { background: #6366f1; }
     iframe, video { width: 100%; margin-top: 10px; }
     img.uploaded-img { max-width: 100%; margin-top: 10px; border-radius: 8px; }
-    .post-actions { display: flex; gap: 10px; margin-top: 10px; }
+    .post-actions { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
+    .comment-section { display: flex; flex-direction: column; align-items: center; margin-top: 10px; }
+    .comment-section ul { list-style: none; padding: 0; width: 100%; }
+    .comment-item { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
   </style>
 </head>
 <body>
@@ -83,9 +88,7 @@
 
     form.onsubmit = async e => {
       e.preventDefault();
-      let dotCount = 1;
       uploadStatus.style.display = 'block';
-      const intervalId = setInterval(() => { uploadStatus.textContent = '업로드 중입니다' + '.'.repeat(dotCount); dotCount = dotCount === 3 ? 1 : dotCount + 1; }, 500);
       try {
         const title = form.title.value;
         const content = form.content.value;
@@ -101,12 +104,18 @@
         form.reset();
         await loadPosts();
       } catch (err) { console.error('글 작성 오류:', err); alert('글 작성 중 오류가 발생했습니다.'); }
-      finally { clearInterval(intervalId); uploadStatus.style.display = 'none'; }
+      finally { uploadStatus.style.display = 'none'; }
     };
 
     async function loadPosts() {
       const snap = await getDocs(query(collection(db, 'posts'), orderBy('createdAt', 'desc')));
-      allPosts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      allPosts = [];
+      for (const d of snap.docs) {
+        const data = { id: d.id, ...d.data() };
+        const commentsSnap = await getDocs(collection(db, 'posts', d.id, 'comments'));
+        data.commentCount = commentsSnap.size;
+        allPosts.push(data);
+      }
       renderPage(1);
     }
 
@@ -116,11 +125,16 @@
       pagination.innerHTML = '';
       const start = (page - 1) * perPage;
       allPosts.slice(start, start + perPage).forEach(p => {
-        const createdAt = p.createdAt?.toDate()?.toLocaleString() || '';
+        const dateStr = p.createdAt?.toDate().toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute:'2-digit', hour12: true }) || '';
         const div = document.createElement('div');
         div.className = 'post-item';
         div.onclick = () => toggleDetail(div, p.id);
-        div.innerHTML = `<strong>${p.title}</strong> - ${p.username} <small>${createdAt}</small><div class="detail" style="display:none"></div>`;
+        div.innerHTML = `
+          <strong>${p.title}</strong><span class="comment-count">${p.commentCount}</span>
+          <small class="post-date">${dateStr}</small>
+          <br><small>${p.username}</small>
+          <div class="detail" style="display:none"></div>
+        `;
         postList.appendChild(div);
       });
       const totalPages = Math.ceil(allPosts.length / perPage);
@@ -137,73 +151,77 @@
       if (lastOpenedDetail && lastOpenedDetail !== detailDiv) { lastOpenedDetail.style.display = 'none'; lastOpenedDetail.innerHTML = ''; }
       if (detailDiv.style.display === 'block') { detailDiv.style.display = 'none'; detailDiv.innerHTML = ''; lastOpenedDetail = null; return; }
       const snap = await getDoc(doc(db, 'posts', id));
-      const p = snap.data();
-      const createdAt = p.createdAt?.toDate()?.toLocaleString() || '';
-      const embeddedMedia = [];
-      const textWithYoutube = p.content.replace(/https:\/\/(www\.)?youtube\.com\/watch\?v=([\w-]+)/g, (m, _, vid) => { embeddedMedia.push(`<iframe height="315" src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe>`); return m; });
-      const filesHtml = p.attachments?.map(f => f.name.match(/\.(jpe?g|png|gif)$/i) ? `<img src="${f.url}" class="uploaded-img">` : f.name.match(/\.(mp4|webm)$/i) ? `<video src="${f.url}" controls></video>` : `<a href="${f.url}" target="_blank">📎 ${f.name}</a>`).join('') || '';
-      const isOwner = currentUser && (currentUser.uid === p.uid || currentUser.email === ADMIN_EMAIL);
+      const p = snap.data(); const dateStr = p.createdAt?.toDate().toLocaleString('en-US', { year: 'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', hour12:true }) || '';
+      const embedded = [];
+      const textWithYouTube = p.content.replace(/https:\/\/(www\.)?youtube\.com\/watch\?v=([\w-]+)/g, (m,_,vid) => { embedded.push(`<iframe height="315" src="https://www.youtube.com/embed/${vid}" frameborder="0" allowfullscreen></iframe>`); return m; });
+      const filesHtml = p.attachments?.map(f => f.name.match(/\.(jpe?g|png|gif)$/i)? `<img src="${f.url}" class="uploaded-img">`: f.name.match(/\.(mp4|webm)$/i)? `<video src="${f.url}" controls></video>`: `<a href="${f.url}" target="_blank">📎 ${f.name}</a>`).join('')||'';
+      const isOwner = currentUser && (currentUser.uid===p.uid || currentUser.email===ADMIN_EMAIL);
       detailDiv.innerHTML = `
         <div class="card" onclick="event.stopPropagation()">
-          <p><img src="${p.photoURL}" class="avatar"> ${p.username} <small>${createdAt}</small></p>
+          <p><img src="${p.photoURL}" class="avatar"> ${p.username} <small class="post-date">${dateStr}</small></p>
           <h3 id="post-title-${id}">${p.title}</h3>
-          <p id="post-content-${id}">${textWithYoutube}</p>
-          ${embeddedMedia.join('')}${filesHtml}
+          <p id="post-content-${id}">${textWithYouTube}</p>
+          ${embedded.join('')}${filesHtml}
           <div class="post-actions">
-            ${isOwner ? `<button onclick="event.stopPropagation(); window.editPost('${id}')">✏️ 수정</button><button onclick="event.stopPropagation(); window.deletePost('${id}')">🗑️ 삭제</button>` : ''}
-            <button onclick="event.stopPropagation(); window.likePost('${id}')">👍 좋아요 (<span id="like-count-${id}">${p.likes||0}</span>)</button>
+            ${isOwner? `<button onclick="event.stopPropagation();window.editPost('${id}')">✏️ 수정</button><button onclick="event.stopPropagation();window.deletePost('${id}')">🗑️ 삭제</button>`: ''}
+            <button onclick="event.stopPropagation();window.likePost('${id}')">👍 좋아요 (<span id="like-count-${id}">${p.likes||0}</span>)</button>
           </div>
           <div class="comment-section">
             <input id="comment-input-${id}" type="text" placeholder="댓글 달기">
-            <button onclick="event.stopPropagation(); window.addComment('${id}')">💬 댓글 작성</button>
+            <button onclick="event.stopPropagation();window.addComment('${id}')">댓글 작성</button>
             <ul id="comment-list-${id}"></ul>
           </div>
-        </div>`;
+        </div>
+      `;
       loadComments(id);
-      detailDiv.style.display = 'block';
-      lastOpenedDetail = detailDiv;
+      detailDiv.style.display = 'block'; lastOpenedDetail = detailDiv;
     };
 
     window.editPost = async (postId) => {
-      const titleElem = document.getElementById(`post-title-${postId}`);
-      const contentElem = document.getElementById(`post-content-${postId}`);
-      const newTitle = prompt('제목을 수정하세요', titleElem.textContent);
-      const newContent = prompt('내용을 수정하세요', contentElem.textContent);
+      const titleEl = document.getElementById(`post-title-${postId}`);
+      const contentEl = document.getElementById(`post-content-${postId}`);
+      const newTitle = prompt('제목을 수정하세요', titleEl.textContent);
+      const newContent = prompt('내용을 수정하세요', contentEl.textContent);
       if (newTitle && newContent) {
-        await updateDoc(doc(db, 'posts', postId), { title: newTitle, content: newContent });
-        titleElem.textContent = newTitle;
-        contentElem.textContent = newContent;
+        await updateDoc(doc(db,'posts',postId),{title:newTitle,content:newContent});
+        titleEl.textContent=newTitle; contentEl.textContent=newContent;
       }
     };
 
-    window.likePost = async (postId) => {
-      await updateDoc(doc(db, 'posts', postId), { likes: increment(1) });
-      const countElem = document.getElementById(`like-count-${postId}`);
-      if (countElem) {
-        countElem.textContent = parseInt(countElem.textContent || '0', 10) + 1;
-      }
+    window.likePost = async postId => {
+      await updateDoc(doc(db,'posts',postId),{likes:increment(1)});
+      const el = document.getElementById(`like-count-${postId}`);
+      if(el) el.textContent=parseInt(el.textContent||'0')+1;
     };
 
-    window.addComment = async (postId) => {
-      const input = document.getElementById(`comment-input-${postId}`);
-      if (!input.value.trim()) return;
-      await addDoc(collection(db, 'posts', postId, 'comments'), { text:input.value, author:currentUser.displayName, uid:currentUser.uid, createdAt:serverTimestamp() });
-      input.value = '';
+    window.addComment = async postId => {
+      const inp = document.getElementById(`comment-input-${postId}`);
+      if(!inp.value.trim()) return;
+      await addDoc(collection(db,'posts',postId,'comments'),{text:inp.value,author:currentUser.displayName,uid:currentUser.uid,createdAt:serverTimestamp()});
+      inp.value=''; loadComments(postId);
+    };
+
+    window.deleteComment = async (postId, commentId) => {
+      if(!confirm('댓글을 삭제하시겠습니까?')) return;
+      await deleteDoc(doc(db,'posts',postId,'comments',commentId));
       loadComments(postId);
     };
 
-    window.deletePost = async (id) => {
-      if (!confirm('정말 삭제할까요?')) return;
-      await deleteDoc(doc(db, 'posts', id));
-      loadPosts();
-    };
+    window.deletePost = async id => { if(!confirm('정말 삭제할까요?')) return; await deleteDoc(doc(db,'posts',id)); loadPosts(); };
 
     async function loadComments(postId) {
       const list = document.getElementById(`comment-list-${postId}`);
-      list.innerHTML = '';
-      (await getDocs(query(collection(db, 'posts', postId, 'comments'), orderBy('createdAt')))).forEach(d => {
-        const { author, text } = d.data();
-        const li = document.createElement('li'); li.textContent = `${author}: ${text}`;
+      list.innerHTML='';
+      const snap = await getDocs(query(collection(db,'posts',postId,'comments'),orderBy('createdAt')));
+      snap.forEach(d => {
+        const { author, text, uid } = d.data();
+        const li = document.createElement('li'); li.className='comment-item';
+        const span = document.createElement('span'); span.textContent = `${author}: ${text}`;
+        li.appendChild(span);
+        if(currentUser && (currentUser.email===ADMIN_EMAIL || currentUser.uid===uid)){
+          const btn = document.createElement('button'); btn.textContent='🗑️'; btn.onclick=e=>{e.stopPropagation(); window.deleteComment(postId,d.id)};
+          li.appendChild(btn);
+        }
         list.appendChild(li);
       });
     }
