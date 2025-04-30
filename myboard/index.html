@@ -247,68 +247,71 @@ form.onsubmit = async e => {
       }
     };
 
-    window.toggleDetail = async (wrapper, id) => {
-      const detailDiv = wrapper.querySelector('.detail');
-      if (detailDiv.style.display === 'block') {
-        detailDiv.style.display = 'none';
-        detailDiv.innerHTML = '';
-        lastOpenedDetail = null;
-        return;
-      }
-      if (lastOpenedDetail) {
-        lastOpenedDetail.style.display = 'none';
-        lastOpenedDetail.innerHTML = '';
-      }
-      const ref = doc(db, 'posts', id);
-      const snap = await getDoc(ref);
-      const p = snap.data();
-      const createdAt = p.createdAt?.toDate?.().toLocaleString() || '';
-      const embeddedMedia = [];
-      const textWithYoutube = p.content.replace(/https:\/\/(www\.)?youtube\.com\/watch\?v=([\w-]+)/g, 
-        (match, _, id) => {
-          embeddedMedia.push(`<iframe height="315" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>`);
-          return match;
-        });
+    // 수정 전 toggleDetail 내 detailDiv 클릭 시 자동 닫힘 방지 개선
+window.toggleDetail = async (wrapper, id) => {
+  const detailDiv = wrapper.querySelector('.detail');
+  if (lastOpenedDetail && lastOpenedDetail !== detailDiv) {
+    lastOpenedDetail.style.display = 'none';
+    lastOpenedDetail.innerHTML = '';
+  }
+  if (detailDiv.style.display === 'block') {
+    detailDiv.style.display = 'none';
+    detailDiv.innerHTML = '';
+    lastOpenedDetail = null;
+    return;
+  }
 
-      const fileDisplays = p.attachments?.map(f => {
-        if (f.name.match(/\.(jpe?g|png|gif)$/i)) {
-          return `<img src="${f.url}" class="uploaded-img">`;
-        } else if (f.name.match(/\.(mp4|webm)$/i)) {
-          return `<video src="${f.url}" controls></video>`;
-        } else {
-          return `<a href="${f.url}" target="_blank">📎 ${f.name}</a>`;
-        }
-      }).join('') || '';
+  const ref = doc(db, 'posts', id);
+  const snap = await getDoc(ref);
+  const p = snap.data();
+  const createdAt = p.createdAt?.toDate?.().toLocaleString() || '';
+  const embeddedMedia = [];
+  const textWithYoutube = p.content.replace(/https:\/\/(www\.)?youtube\.com\/watch\?v=([\w-]+)/g, 
+    (match, _, id) => {
+      embeddedMedia.push(`<iframe height="315" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>`);
+      return match;
+    });
 
-      const isOwnerOrAdmin = currentUser && (currentUser.uid === p.uid || currentUser.email === ADMIN_EMAIL);
-      const likeCount = p.likes || 0;
+  const fileDisplays = p.attachments?.map(f => {
+    if (f.name.match(/\.(jpe?g|png|gif)$/i)) {
+      return `<img src="${f.url}" class="uploaded-img">`;
+    } else if (f.name.match(/\.(mp4|webm)$/i)) {
+      return `<video src="${f.url}" controls></video>`;
+    } else {
+      return `<a href="${f.url}" target="_blank">📎 ${f.name}</a>`;
+    }
+  }).join('') || '';
 
-      detailDiv.innerHTML = `
-        <div class="card">
-          <p><img src="${p.photoURL}" class="avatar"> ${p.username} <small>${createdAt}</small></p>
-          <h3 id="post-title-${id}">${p.title}</h3>
-          <p id="post-content-${id}">${textWithYoutube}</p>
-          ${embeddedMedia.join('')}
-          ${fileDisplays}
-          <div class="post-actions">
-            ${isOwnerOrAdmin ? `
-              <button onclick="window.editPost('${id}')">✏️ 수정</button>
-              <button onclick="confirm('정말 삭제할까요?') && deleteDoc(doc(db, 'posts', '${id}')).then(loadPosts)">🗑️ 삭제</button>
-            ` : ''}
-            <button onclick="window.likePost('${id}')">👍 좋아요 (<span id="like-count-${id}">${likeCount}</span>)</button>
-          </div>
-          <div class="comment-section">
-            <input type="text" placeholder="댓글 달기" id="comment-input-${id}">
-            <button onclick="window.addComment('${id}')">💬 댓글 작성</button>
-            <ul id="comment-list-${id}"></ul>
-          </div>
-        </div>
-      `;
+  const isOwnerOrAdmin = currentUser && (currentUser.uid === p.uid || currentUser.email === ADMIN_EMAIL);
+  const likeCount = p.likes || 0;
 
-      loadComments(id);
-      detailDiv.style.display = 'block';
-      lastOpenedDetail = detailDiv;
-    };
+  detailDiv.innerHTML = `
+    <div class="card">
+      <p><img src="${p.photoURL}" class="avatar"> ${p.username} <small>${createdAt}</small></p>
+      <h3 id="post-title-${id}">${p.title}</h3>
+      <p id="post-content-${id}">${textWithYoutube}</p>
+      ${embeddedMedia.join('')}
+      ${fileDisplays}
+      <div class="post-actions">
+        ${isOwnerOrAdmin ? `
+          <button type="button" onclick="window.editPost('${id}')">✏️ 수정</button>
+          <button type="button" onclick="confirm('정말 삭제할까요?') && deleteDoc(doc(db, 'posts', '${id}')).then(loadPosts)">🗑️ 삭제</button>
+        ` : ''}
+        <button type="button" onclick="window.likePost('${id}')">👍 좋아요 (<span id="like-count-${id}">${likeCount}</span>)</button>
+      </div>
+      <div class="comment-section">
+        <input type="text" placeholder="댓글 달기" id="comment-input-${id}">
+        <button type="button" onclick="window.addComment('${id}')">💬 댓글 작성</button>
+        <ul id="comment-list-${id}"></ul>
+      </div>
+    </div>
+  `;
+
+  loadComments(id);
+  detailDiv.style.display = 'block';
+  lastOpenedDetail = detailDiv;
+};
+
 
     window.editPost = async (postId) => {
       const titleElem = document.getElementById(`post-title-${postId}`);
