@@ -71,6 +71,12 @@
       color: #60a5fa;
       font-weight: bold;
     }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
   </style>
 </head>
 <body>
@@ -86,15 +92,21 @@
     <input name="title" placeholder="제목 입력" required>
     <textarea name="content" rows="4" placeholder="내용 입력" required></textarea>
     <input type="file" name="files" multiple>
-    <button type="submit">글 작성</button>
+    <div style="text-align:center">
+      <button type="submit">글 작성</button>
+    </div>
   </form>
 
   <div class="post-list" id="postList"></div>
+  <div class="pagination">
+    <button id="prevPage">⬅️ 이전</button>
+    <button id="nextPage">다음 ➡️</button>
+  </div>
   <div id="postDetail"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, getDoc, getDocs, updateDoc, deleteDoc, onSnapshot, serverTimestamp, orderBy, query } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp, orderBy, query, limit, startAfter, getDocs } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
@@ -113,6 +125,9 @@
     const storage = getStorage(app);
 
     let currentUser = null;
+    let lastVisible = null;
+    let firstVisible = null;
+    let pageStack = [];
 
     const loginBtn = document.getElementById('login');
     const logoutBtn = document.getElementById('logout');
@@ -120,6 +135,8 @@
     const form = document.getElementById('postForm');
     const postList = document.getElementById('postList');
     const postDetail = document.getElementById('postDetail');
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
 
     loginBtn.onclick = () => signInWithPopup(auth, new GoogleAuthProvider());
     logoutBtn.onclick = () => signOut(auth);
@@ -153,20 +170,35 @@
         createdAt: serverTimestamp()
       });
       form.reset();
+      loadPosts();
     };
 
-    const loadPosts = async () => {
-      const q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'));
+    const loadPosts = async (direction = 'next') => {
+      let q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), limit(5));
+
+      if (direction === 'next' && lastVisible) {
+        q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), startAfter(lastVisible), limit(5));
+      } else if (direction === 'prev' && pageStack.length > 1) {
+        pageStack.pop();
+        const prevLast = pageStack[pageStack.length - 1];
+        q = query(collection(db, 'posts'), orderBy('createdAt', 'desc'), startAfter(prevLast), limit(5));
+      }
+
       const snap = await getDocs(q);
-      postList.innerHTML = '';
-      snap.forEach(docSnap => {
-        const p = docSnap.data();
-        const id = docSnap.id;
-        const div = document.createElement('div');
-        div.className = 'post-item';
-        div.innerHTML = `<a href="#" onclick="showPost('${id}');return false;">${p.title}</a> - ${p.username}`;
-        postList.appendChild(div);
-      });
+      if (!snap.empty) {
+        postList.innerHTML = '';
+        snap.forEach(docSnap => {
+          const p = docSnap.data();
+          const id = docSnap.id;
+          const div = document.createElement('div');
+          div.className = 'post-item';
+          div.innerHTML = `<a href="#" onclick="showPost('${id}');return false;">${p.title}</a> - ${p.username}`;
+          postList.appendChild(div);
+        });
+        firstVisible = snap.docs[0];
+        lastVisible = snap.docs[snap.docs.length - 1];
+        pageStack.push(firstVisible);
+      }
     };
 
     window.showPost = async id => {
@@ -191,6 +223,9 @@
         loadPosts();
       }
     };
+
+    prevBtn.onclick = () => loadPosts('prev');
+    nextBtn.onclick = () => loadPosts('next');
 
     loadPosts();
   </script>
