@@ -121,6 +121,9 @@
       ));
       for (const d of snap.docs) {
         const p = d.data();
+                // ① 실제 댓글 개수 구하기
+        const comSnap = await getDocs(collection(db, 'posts', d.id, 'comments'));
+        const commentCount = comSnap.size;        
         const dateStr = p.createdAt?.toDate().toLocaleString();
         const div = document.createElement('div');
         div.className = 'post-item';
@@ -128,7 +131,7 @@
         div.innerHTML = `
           <div class="title">
             ${p.title}
-            <span class="comment-count">${p.commentCount}</span>
+            <span class="comment-count">${p.commentCount ?? 0}</span>
           </div>
           <div class="meta">
             <span class="author">${p.username}</span>
@@ -156,8 +159,12 @@
     }
 
     // 상세 보기
-    async function toggleDetail(wrapper, id) {
-      const detail = wrapper.querySelector('.detail');
+     async function toggleDetail(wrapper, id) {
+   const detail = wrapper.querySelector('.detail');
+   // ① 이전 상세창이 있으면 닫아준다
+   if (lastOpenedDetail && lastOpenedDetail !== detail) {
+     lastOpenedDetail.style.display = 'none';
+   }
       if (detail.style.display === 'block') {
         detail.style.display = 'none';
         return;
@@ -193,7 +200,7 @@
           <div class="post-actions">
             ${isOwner ? `<button onclick="event.stopPropagation(); editPost('${id}')">✏️ 수정</button>
                           <button onclick="event.stopPropagation(); deletePost('${id}')">🗑️ 삭제</button>` : ''}
-            <button onclick="event.stopPropagation(); likePost('${id}')">👍 (<span id="like-count-${id}">${p.likes}</span>)</button>
+            <button onclick="event.stopPropagation(); likePost('${id}')">👍 (<span id="like-count-${id}">${p.likes ?? 0}</span>)</button>
           </div>
           <div class="comment-section">
             <input id="comment-input-${id}" type="text" placeholder="댓글 달기">
@@ -203,6 +210,8 @@
         </div>`;
       detail.style.display = 'block';
       loadComments(id);
+         // ② 지금 연 상세창을 저장해 둔다
+        lastOpenedDetail = detail;
     }
 
     // 이하 editPost, likePost(1회 제한), addComment, deleteComment, deletePost, loadComments 함수는 기존과 동일하게 유지
