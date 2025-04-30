@@ -61,7 +61,7 @@
   <script type="module">
     let lastOpenedDetail = null; 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp, orderBy, query, limit, increment } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp, orderBy, query, limit, increment, getCountFromServer, offset } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
@@ -163,10 +163,10 @@ function renderPagination(currentPage, totalPosts) {
 
   // ▶ 다음 블럭
   if (windowEnd < totalPages) {
-    const b = document.createElement('button');
-    b.textContent = '>';
-    b.onclick = () => loadPosts(windowEnd + 1);
-    pg.appendChild(b);
+    const next = document.createElement('button');
+    next.textContent = '>';
+    next.onclick = () => loadPosts(windowEnd + 1);
+    pg.appendChild(next);
   }
 }
 
@@ -174,11 +174,19 @@ function renderPagination(currentPage, totalPosts) {
     async function loadPosts(page = 1) {
       const list = document.getElementById('postList');
       list.innerHTML = '';
+
+            // 1) offset 계산
+      const skip = (page - 1) * perPage;
+
       const snap = await getDocs(query(
         collection(db, 'posts'),
         orderBy('createdAt', 'desc'),
+        offset(skip),
         limit(perPage)
       ));
+
+
+
       for (const d of snap.docs) {
         const p = d.data();
                 // ① 실제 댓글 개수 구하기
@@ -191,7 +199,7 @@ function renderPagination(currentPage, totalPosts) {
         div.innerHTML = `
           <div class="title">
             ${p.title}
-            <span class="comment-count">${p.commentCount ?? 0}</span>
+            <span class="comment-count">${commentCount}</span>
           </div>
           <div class="meta">
             <span class="author">${p.username}</span>
