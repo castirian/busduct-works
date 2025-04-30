@@ -89,26 +89,27 @@
   <script>
     const boardEl = document.getElementById('board');
 
-    function loadPosts() {
-      boardEl.innerHTML = '';
-      const posts = JSON.parse(localStorage.getItem('posts') || '[]');
-      posts.reverse().forEach((post, idx) => {
-        const el = document.createElement('div');
-        el.className = 'card';
-        el.innerHTML = `
-          <h2>\${post.title}</h2>
-          <p>\${post.content}</p>
-          <div class="comments">
-            <strong>댓글:</strong>
-            <ul>
-              \${(post.comments || []).map(c => `<li>\${c}</li>`).join('')}
-            </ul>
-            <input type="text" placeholder="댓글 입력..." onkeydown="if(event.key==='Enter')addComment(\${posts.length - 1 - idx}, this)">
-          </div>
-        `;
-        boardEl.appendChild(el);
-      });
-    }
+            function loadPosts() {
+        boardEl.innerHTML = '';
+        const posts = JSON.parse(localStorage.getItem('posts') || '[]');
+        posts.reverse().forEach((post, idx) => {
+            const el = document.createElement('div');
+            el.className = 'card';
+            el.innerHTML = `
+            <h2>${post.title}</h2>
+            <p>${post.content}</p>
+            <div class="comments">
+                <strong>댓글:</strong>
+                <ul>
+                ${(post.comments || []).map(c => `<li>${c}</li>`).join('')}
+                </ul>
+                <input type="text" placeholder="댓글 입력..." onkeydown="if(event.key==='Enter')addComment(${posts.length - 1 - idx}, this)">
+            </div>
+            `;
+            boardEl.appendChild(el);
+        });
+        }
+
 
     function addPost() {
       const title = document.getElementById('title').value;
