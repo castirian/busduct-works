@@ -58,6 +58,7 @@
     .post-item {
       border-bottom: 1px solid #444;
       padding: 12px 0;
+      cursor: pointer;
     }
     .centered {
       display: flex;
@@ -86,6 +87,15 @@
     .pagination button.active {
       background: #6366f1;
     }
+    iframe, video {
+      width: 100%;
+      margin-top: 10px;
+    }
+    img.uploaded-img {
+      max-width: 100%;
+      margin-top: 10px;
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body>
@@ -112,7 +122,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, getDoc, getDocs, deleteDoc, serverTimestamp, orderBy, query, limit, startAfter } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, doc, getDoc, getDocs, deleteDoc, serverTimestamp, orderBy, query } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
@@ -134,6 +144,7 @@
     let allPosts = [];
     let currentPage = 1;
     const perPage = 20;
+    let lastOpenedDetail = null;
 
     const loginBtn = document.getElementById('login');
     const logoutBtn = document.getElementById('logout');
@@ -204,8 +215,9 @@
         const createdAt = p.createdAt?.toDate?.().toLocaleString() || '';
         const div = document.createElement('div');
         div.className = 'post-item';
+        div.onclick = () => toggleDetail(div, p.id);
         div.innerHTML = `
-          <a onclick="toggleDetail(this, '${p.id}')">${p.title}</a> - ${p.username} <small>${createdAt}</small>
+          <strong>${p.title}</strong> - ${p.username} <small>${createdAt}</small>
           <div class="detail" style="display:none"></div>
         `;
         postList.appendChild(div);
@@ -220,26 +232,50 @@
       }
     };
 
-    window.toggleDetail = async (el, id) => {
-      const detailDiv = el.nextElementSibling;
+    window.toggleDetail = async (wrapper, id) => {
+      const detailDiv = wrapper.querySelector('.detail');
       if (detailDiv.style.display === 'block') {
         detailDiv.style.display = 'none';
         detailDiv.innerHTML = '';
+        lastOpenedDetail = null;
         return;
+      }
+      if (lastOpenedDetail) {
+        lastOpenedDetail.style.display = 'none';
+        lastOpenedDetail.innerHTML = '';
       }
       const ref = doc(db, 'posts', id);
       const snap = await getDoc(ref);
       const p = snap.data();
       const createdAt = p.createdAt?.toDate?.().toLocaleString() || '';
+      const embeddedMedia = [];
+      const textWithYoutube = p.content.replace(/https:\/\/(www\.)?youtube\.com\/watch\?v=([\w-]+)/g, 
+        (match, _, id) => {
+          embeddedMedia.push(`<iframe height="315" src="https://www.youtube.com/embed/${id}" frameborder="0" allowfullscreen></iframe>`);
+          return match;
+        });
+
+      const fileDisplays = p.attachments?.map(f => {
+        if (f.name.match(/\.(jpe?g|png|gif)$/i)) {
+          return `<img src="${f.url}" class="uploaded-img">`;
+        } else if (f.name.match(/\.(mp4|webm)$/i)) {
+          return `<video src="${f.url}" controls></video>`;
+        } else {
+          return `<a href="${f.url}" target="_blank">📎 ${f.name}</a>`;
+        }
+      }).join('') || '';
+
       detailDiv.innerHTML = `
         <div class="card">
           <p><img src="${p.photoURL}" class="avatar"> ${p.username} <small>${createdAt}</small></p>
           <h3>${p.title}</h3>
-          <p>${p.content}</p>
-          ${p.attachments?.map(f => `<a href="${f.url}" target="_blank">📎 ${f.name}</a>`).join('') || ''}
+          <p>${textWithYoutube}</p>
+          ${embeddedMedia.join('')}
+          ${fileDisplays}
         </div>
       `;
       detailDiv.style.display = 'block';
+      lastOpenedDetail = detailDiv;
     };
 
     loadPosts();
