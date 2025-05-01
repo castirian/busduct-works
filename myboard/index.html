@@ -265,7 +265,14 @@ function renderPagination(currentPage, totalPosts) {
     const p = d.data();
     const comSnap = await getDocs(collection(db, 'posts', d.id, 'comments'));
     const commentCount = comSnap.size;
-    const dateStr = p.createdAt?.toDate().toLocaleString();
+     const dateStr = p.createdAt?.toDate().toLocaleString('en-US', {
+   year:   '2-digit',   // 2025 → 25
+   month:  '2-digit',
+   day:    '2-digit',
+   hour:   '2-digit',
+   minute: '2-digit',
+   hour12: true         // AM/PM
+ }).replace(',', '');    // “MM/DD/YY, hh:mm AM” → “MM/DD/YY hh:mm AM”
     const div = document.createElement('div');
     div.className = 'post-item';
     div.onclick = () => toggleDetail(div, d.id);
