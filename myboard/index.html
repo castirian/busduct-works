@@ -355,26 +355,46 @@ async function loadComments(postId) {
       const isOwner = currentUser && (currentUser.uid === p.uid);
 
       detail.innerHTML = `
-        <div class="card" onclick="event.stopPropagation()">
-         
-          <div id="post-content-${id}">${p.content}</div>
-          ${embedded.join('')}
-          ${filesHtml}
-          <div class="post-actions">
-            ${isOwner ? `<button onclick="event.stopPropagation(); editPost('${id}')">✏️ 수정</button>
-                          <button onclick="event.stopPropagation(); deletePost('${id}')">🗑️ 삭제</button>` : ''}
-            <button onclick="event.stopPropagation(); likePost('${id}')">👍 (<span id="like-count-${id}">${p.likes ?? 0}</span>)</button>
-          </div>
-          <div class="comment-section">
-            <input id="comment-input-${id}" type="text" placeholder="댓글 달기">
-            <button onclick="event.stopPropagation(); addComment('${id}')">댓글 작성</button>
-            <ul id="comment-list-${id}"></ul>
-          </div>
-        </div>`;
-      detail.style.display = 'block';
-      loadComments(id);
-         // ② 지금 연 상세창을 저장해 둔다
-        lastOpenedDetail = detail;
+  <div class="card" onclick="event.stopPropagation()">
+    <div id="post-content-${id}">${p.content}</div>
+    ${embedded.join('')}
+    ${filesHtml}
+    <div class="post-actions">
+      ${isOwner ? `
+        <button
+          id="edit-btn-${id}"
+          onclick="event.stopPropagation(); editPost('${id}')"
+        >✏️ 수정</button>
+        <button
+          id="delete-btn-${id}"
+          onclick="event.stopPropagation(); deletePost('${id}')"
+        >🗑️ 삭제</button>
+      ` : ``}
+      <button
+        id="like-btn-${id}"
+        onclick="event.stopPropagation(); likePost('${id}')"
+      >
+        👍 (<span id="like-count-${id}">${p.likes ?? 0}</span>)
+      </button>
+    </div>
+    <div class="comment-section">
+      <input
+        id="comment-input-${id}"
+        type="text"
+        placeholder="댓글 달기"
+      >
+      <button
+        id="comment-btn-${id}"
+        onclick="event.stopPropagation(); addComment('${id}')"
+      >댓글 작성</button>
+      <ul id="comment-list-${id}"></ul>
+    </div>
+  </div>
+`;
+detail.style.display = 'block';
+loadComments(id);
+// ② 지금 연 상세창을 저장해 둔다
+lastOpenedDetail = detail;
     }
 
 // 수정 기능 (제목+내용)
