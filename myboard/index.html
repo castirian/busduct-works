@@ -96,6 +96,8 @@
     import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
   // ② 모듈 코드 – 여기부터 자유롭게 변수/함수 선언
+  let likeLock = false;
+let commentLock = false;
   let lastOpenedDetail = null;
   const pageCursors = {};
 
@@ -429,28 +431,59 @@ async function editPost(id) {
 
 // 좋아요 1회 제한
 async function likePost(id) {
-  if (!currentUser) { alert('로그인 후 이용해주세요.'); return; }
-  const likeRef = doc(db, 'posts', id, 'likes', currentUser.uid);
-  const likeSnap = await getDoc(likeRef);
-  if (likeSnap.exists()) { alert('이미 좋아요를 누르셨습니다.'); return; }
-  await setDoc(likeRef, { uid: currentUser.uid, createdAt: serverTimestamp() });
-  await updateDoc(doc(db, 'posts', id), { likes: increment(1) });
-  const e = document.getElementById(`like-count-${id}`);
-  if (e) e.textContent = parseInt(e.textContent||'0')+1;
+const btn = document.querySelector(`#like-btn-${id}`); // ← 수정
+if (!currentUser) { alert('로그인 후 이용해주세요.'); return; }
+if (likeLock) return;
+likeLock = true;
+btn.disabled = true;  // ← 추가
+
+const likeRef = doc(db, 'posts', id, 'likes', currentUser.uid);
+const likeSnap = await getDoc(likeRef);
+if (likeSnap.exists()) {
+ alert('이미 좋아요를 누르셨습니다.');
+ likeLock = false;
+ btn.disabled = false; // ← 실패 시 해제
+ return;
+}
+
+await setDoc(likeRef, { uid: currentUser.uid, createdAt: serverTimestamp() });
+await updateDoc(doc(db, 'posts', id), { likes: increment(1) });
+const e = document.getElementById(`like-count-${id}`);
+if (e) e.textContent = parseInt(e.textContent || '0') + 1;
+
+setTimeout(() => {
+ likeLock = false;
+ btn.disabled = false;
+}, 1000);
 }
 
 // 댓글 쓰기
 async function addComment(id) {
-  const i = document.getElementById(`comment-input-${id}`);
-  if (!i.value.trim()) return;
-  await addDoc(collection(db,'posts',id,'comments'), {
-    text: i.value,
-    author: currentUser.displayName,
-    uid: currentUser.uid,
-    createdAt: serverTimestamp()
-  });
-  i.value = '';
-  loadComments(id);
+const btn = document.querySelector(`#comment-btn-${id}`); // 버튼 id 확인
+if (commentLock) return;
+commentLock = true;
+btn.disabled = true;  // 추가
+
+const i = document.getElementById(`comment-input-${id}`);
+if (!i.value.trim()) {
+ commentLock = false;
+ btn.disabled = false; // 추가
+ return;
+}
+
+await addDoc(collection(db,'posts',id,'comments'), {
+ text: i.value,
+ author: currentUser.displayName,
+ uid: currentUser.uid,
+ createdAt: serverTimestamp()
+});
+i.value = '';
+loadComments(id);
+
+setTimeout(() => {
+ commentLock = false;
+ btn.disabled = false;
+}, 1000);
 }
 
 // 댓글 삭제
