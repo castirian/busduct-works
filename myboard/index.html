@@ -194,7 +194,10 @@
     <textarea name="content" rows="4" placeholder="내용 입력" required></textarea>
     <input type="file" name="files" multiple>
     <div id="uploadStatus" class="uploading" style="display:none;">
+     <!-- 상태 메시지를 띄울 span -->
+    <span id="statusText"></span>
     <button id="cancelUpload" type="button">❌</button>
+      </div>
     </div>
     <div class="centered">
       <button type="submit" class="action-btn">글 작성</button>
