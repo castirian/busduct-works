@@ -193,7 +193,9 @@
     <input name="title" placeholder="제목 입력" required>
     <textarea name="content" rows="4" placeholder="내용 입력" required></textarea>
     <input type="file" name="files" multiple>
-    <div id="uploadStatus" class="uploading" style="display:none;"></div>
+    <div id="uploadStatus" class="uploading" style="display:none;">
+      <button id="cancelUpload" type="button">❌</button>
+    </div>
     <div class="centered">
       <button type="submit" class="action-btn">글 작성</button>
     </div>
@@ -218,6 +220,10 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
     const storage = getStorage(app);
+    const functions = getFunctions(app);
+    const createPost = httpsCallable(functions, 'createPost');
+
+    
 
       let currentUser     = null,
           lastOpenedDetail = null,
@@ -243,30 +249,48 @@
 document.getElementById('postForm').onsubmit = async e => {
   e.preventDefault();
 
+  // 업로드 버튼 비활성화
+  const submitButton = e.target.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+
   // ① 제목/본문 길이 제한 검사
-  const titleInput   = e.target.title.value.trim();
+  const titleInput = e.target.title.value.trim();
   const contentInput = e.target.content.value.trim();
   if (titleInput.length === 0) {
     alert('제목을 입력');
+    submitButton.disabled = false; // 오류시 버튼 재활성화
     return;
   }
   if (titleInput.length > 100) {
     alert(`제목은 최대 100자 (현재 ${titleInput.length}자)`);
+    submitButton.disabled = false; // 오류시 버튼 재활성화
     return;
   }
   if (contentInput.length === 0) {
     alert('내용을 입력');
+    submitButton.disabled = false; // 오류시 버튼 재활성화
     return;
   }
   if (contentInput.length > 2000) {
     alert(`내용은 최대 2000자 (현재 ${contentInput.length}자)`);
+    submitButton.disabled = false; // 오류시 버튼 재활성화
     return;
   }
 
-  // 기존 업로드 로직 시작
+  // 업로드 상태 표시
   const statusEl = document.getElementById('uploadStatus');
-  statusEl.style.display     = 'block';
-  statusEl.textContent       = '업로드 중 (0%)';
+  statusEl.style.display = 'block';
+  statusEl.textContent = '업로드 중 (0%)';
+
+  // 취소 버튼
+  const cancelBtn = document.getElementById('cancelUpload');
+  let cancelUpload = false;
+
+  cancelBtn.onclick = () => {
+    cancelUpload = true;
+    statusEl.textContent = '업로드 취소됨';
+    submitButton.disabled = false;  // 취소 후 버튼 재활성화
+  };
 
   try {
     const title = titleInput;
@@ -275,40 +299,38 @@ document.getElementById('postForm').onsubmit = async e => {
     const attachments = [];
 
     for (const f of files) {
-      const fileRef    = ref(storage, `uploads/${Date.now()}-${f.name}`);
+      const fileRef = ref(storage, `uploads/${Date.now()}-${f.name}`);
       const uploadTask = uploadBytesResumable(fileRef, f);
 
       // ② progress 이벤트 구독
       uploadTask.on('state_changed',
         snapshot => {
+          if (cancelUpload) {
+            uploadTask.cancel(); // 업로드 취소
+            return;
+          }
+
           const pct = ((snapshot.bytesTransferred / snapshot.totalBytes) * 100).toFixed(0);
           statusEl.textContent = `업로드 중 (${pct}%)`;
         },
         error => {
           console.error(error);
           alert('업로드 중 오류 발생');
+          submitButton.disabled = false; // 오류 발생 시 버튼 활성화
         }
       );
 
       // 완료 대기 후 URL
       const snap = await uploadTask;
-      const url  = await getDownloadURL(snap.ref);
+      const url = await getDownloadURL(snap.ref);
       attachments.push({ name: f.name, url });
     }
 
-    // Firestore에 글 쓰기
-    await addDoc(collection(db, 'posts'), {
+    // Cloud Function 호출로 변경
+    const res = await createPost({
       title,
       content,
-      uid:           currentUser.uid,
-      username:      currentUser.displayName,
-      photoURL:      currentUser.photoURL,
-      attachments,
-      likes:         0,
-      dislikes:      0,
-      views:         0,
-      commentCount:  0,
-      createdAt:     serverTimestamp()
+      attachments
     });
 
     e.target.reset();
@@ -319,8 +341,10 @@ document.getElementById('postForm').onsubmit = async e => {
   } finally {
     // ③ 모든 파일 처리 후 상태창 숨기기
     statusEl.style.display = 'none';
+    submitButton.disabled = false; // 업로드 완료 후 버튼 재활성화
   }
 };
+
 
 
     async function getTotalPosts() {

@@ -2,8 +2,12 @@
 const functions = require("firebase-functions");
 const admin     = require("firebase-admin");
 admin.initializeApp();
-
+const db = admin.firestore();
 /**
+ * 
+ * 
+ * 
+ * 
  * rateLimited: 분당 60회 호출 제한 적용된 Callable Function
  */
 exports.rateLimited = functions.https.onCall(async (data, context) => {
@@ -50,3 +54,48 @@ exports.rateLimited = functions.https.onCall(async (data, context) => {
 
   return { success: true };
 });
+
+
+// Callable Function: 클라이언트에서 호출해서 글을 씁니다.
+exports.createPost = functions.https.onCall(async (data, context) => {
+    // 1) 인증 확인
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "로그인이 필요합니다.");
+    }
+  
+    const { title, content, attachments } = data;
+  
+    // 2) 길이 재검사
+    if (typeof title !== "string" || title.trim().length === 0) {
+        throw new functions.https.HttpsError("invalid-argument", "제목을 입력");
+      }
+      if (title.length > 100) {
+        throw new functions.https.HttpsError("invalid-argument", `제목은 최대 100자 (현재 ${title.length}자)`);
+      }
+      if (typeof content !== "string" || content.trim().length === 0) {
+        throw new functions.https.HttpsError("invalid-argument", "내용을 입력");
+      }
+      if (content.length > 2000) {
+        throw new functions.https.HttpsError("invalid-argument", `내용은 최대 2000자 (현재 ${content.length}자)`);
+      }
+    if (!Array.isArray(attachments)) {
+      throw new functions.https.HttpsError("invalid-argument", "잘못된 첨부파일 형식입니다.");
+    }
+  
+    // 3) Firestore에 쓰기
+    const docRef = await db.collection("posts").add({
+      title:       title.trim(),
+      content:     content.trim(),
+      uid:         context.auth.uid,
+      username:    context.auth.token.name,
+      photoURL:    context.auth.token.picture,
+      attachments: attachments,
+      likes:       0,
+      dislikes:    0,
+      views:       0,
+      commentCount:0,
+      createdAt:   admin.firestore.FieldValue.serverTimestamp()
+    });
+  
+    return { success: true, id: docRef.id };
+  });
