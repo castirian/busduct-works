@@ -6,117 +6,182 @@
   <title>🔥 게시판</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Noto Sans KR', sans-serif; background: #1e1e1e; color: #e5e7eb; max-width: 800px; margin: auto; padding: 20px; }
-    .topbar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .card { background: #2d2d2d; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 14px rgba(0,0,0,0.2); }
-    input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #555; border-radius: 8px; background: #1e1e1e; color: #e5e7eb; }
-    button { background: #4f46e5; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-    button:hover { background: #6366f1; }
-    .post-item { padding: 4px 0; border-bottom: 1px solid #444; }
-
-
-.post-item .content-preview {
-
-  display: -webkit-box;
-  -webkit-line-clamp: 2;       /* 2줄까지만 */
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: normal;         /* 자동 줄바꿈 허용 */
-/*  display: -webkit-box;
-/*  -webkit-line-clamp: 2;
-/*  -webkit-box-orient: vertical;
- /* overflow: hidden;
-/*  text-overflow: ellipsis;
-/*  margin: 4px 0;            /* 제목과 footer 사이 간격 */
-}
-
-/* 2) footer: 좌측에 id/날짜, 우측에 조회수 */
-.post-item .footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.75em;
-  color: #aaa;
-  margin-top: 4px;
-}
-
-    .post-item .comment-count { font-size: 0.6em; margin-left: 6px; background: #444; padding: 1px 4px; border-radius: 12px; }
-
-
-    .post-item .title {
-  font-size: 1.06em;    /* 1em + 약 1pt (1pt ≈ 0.06em) */
-  font-weight: 600;     /* 보통 500~700 사이로 조절 가능 */
-}
-
-    .centered { display: flex; justify-content: center; margin-top: 10px; }
-    .uploading { text-align: center; color: #facc15; margin-bottom: 10px; }
-    .pagination button.active { background: #6366f1; cursor: default; opacity: 0.8; }
-    img.uploaded-img, video, iframe { width: 100%; margin-top: 10px; }
-    .post-actions { display: flex; justify-content: center; gap: 10px; margin-top: 10px; }
-          .comment-section {
-        display: flex;
-        flex-direction: column;  /* 입력창, 버튼, 댓글목록을 세로로 쌓습니다 */
-        align-items: center;     /* 자식 요소들을 수평 중앙 정렬합니다 */
-        margin-top: 10px;
-      }
-
-      /* 버튼만 위쪽 여백을 주고 중앙에 고정 */
-      .comment-section button {
-        margin-top: 8px;
-      }
-
-      /* 댓글 목록은 너비만 채워주면 됩니다 */
-      .comment-section ul {
-        width: 100%;
-      }
-    .comment-item { display: flex; justify-content: space-between; padding: 4px 0; }
-
-        /* 글 내용 줄바꿈 보존 */
-    div[id^="post-content-"] {
-      white-space: pre-wrap;
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #1e1e1e;
+      color: #e5e7eb;
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
     }
-    .detail .card {
-  max-height: 80vh;       /* 화면 높이(viewport)의 80% */
-       white-space: pre-wrap;       /* Enter 그대로 살리기 */
-      overflow-wrap: anywhere;     /* 단어 중간에도 줄바꿈 */
-      word-break: break-all;    /* 내용이 넘치면 세로 스크롤 */
-  padding: 16px;          /* 기존 패딩 조정해도 좋습니다 */
-}
+    .topbar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .card {
+      background: #2d2d2d;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #555;
+      border-radius: 8px;
+      background: #1e1e1e;
+      color: #e5e7eb;
+    }
+    .post-item {
+      padding: 12px 0;
+      border-bottom: 1px solid #444;
+    }
+    .post-item .title {
+      flex: 1;
+      font-size: 1rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .post-item .comment-count {
+      font-size: 0.6em;
+      margin-left: 6px;
+      background: #444;
+      padding: 1px 4px;
+      border-radius: 12px;
+    }
+    .post-item .footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75em;
+      color: #aaa;
+      margin-top: 4px;
+    }
+    .post-item .footer .author,
+    .post-item .footer .datetime {
+      line-height: 1;
+    }
+    .pagination button.active {
+      background: #6366f1;
+      cursor: default;
+      opacity: 0.8;
+    }
+    img.uploaded-img, video, iframe {
+      width: 100%;
+      margin-top: 10px;
+    }
+    /* 목록 미리보기 2줄 */
+    .content-preview {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: normal;
+      margin: 8px 0;
+    }
+    /* 상세 본문 전체 줄바꿈 보존 */
+    .post-content {
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: break-all;
+      margin: 8px 0;
+    }
 
+    /* 댓글 섹션 */
+    .comment-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .comment-section ul {
+      list-style: none;
+      padding: 0;
+      width: 100%;
+    }
+    .comment-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+    }
+
+    /* 공통 액션 버튼 스타일 */
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 120px;
+      height: 44px;
+      padding: 0 16px;
+      border-radius: 8px;
+      background: #4f46e5;
+      color: #fff;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin: 4px 0;
+    }
+    .action-btn:hover {
+      background: #6366f1;
+    }
+    .action-btn > *:not(:last-child) {
+      margin-right: 6px;
+    }
+    .post-actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .centered {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .uploading {
+      text-align: center;
+      color: #facc15;
+      margin-bottom: 10px;
+    }
   </style>
-  <link rel="icon" href="favicon.ico" />
 </head>
 <body>
   <div class="topbar">
     <p id="user">로그인 상태 확인 중...</p>
-    <button id="login">로그인</button>
-    <button id="logout" style="display:none">로그아웃</button>
+    <button id="login" class="action-btn">로그인</button>
+    <button id="logout" class="action-btn" style="display:none">로그아웃</button>
   </div>
-  <h1>🔥 Firebase_Board 🔥</h1> 
+
+  <h1>🔥 Firebase 게시판</h1>
   <div id="postList"></div>
-  <div id="pagination" class="pagination"></div>
-  <form id="postForm" style="display:none" class="card">
+  <div id="pagination" class="pagination centered"></div>
+
+  <form id="postForm" class="card" style="display:none">
     <input name="title" placeholder="제목 입력" required>
     <textarea name="content" rows="4" placeholder="내용 입력" required></textarea>
     <input type="file" name="files" multiple>
-    <div class="uploading" id="uploadStatus" style="display:none;">업로드 중입니다...</div>
-    <div class="centered"><button type="submit">글 작성</button></div>
+    <div id="uploadStatus" class="uploading" style="display:none;">업로드 중입니다...</div>
+    <div class="centered">
+      <button type="submit" class="action-btn">글 작성</button>
+    </div>
   </form>
 
   <script type="module">
-
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getFirestore, collection, addDoc, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp, orderBy, query, limit, startAfter, increment, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
-  // ② 모듈 코드 – 여기부터 자유롭게 변수/함수 선언
-  let likeLock = false;
-let commentLock = false;
-  let lastOpenedDetail = null;
-  const pageCursors = {};
 
-
+    // Firebase 설정 복원
     const firebaseConfig = {
       apiKey: "AIzaSyC6RvL8x2EQrgy8aSc8R63fzRvg85fX32w",
       authDomain: "my-board-project-58b71.firebaseapp.com",
@@ -130,20 +195,19 @@ let commentLock = false;
     const auth = getAuth(app);
     const storage = getStorage(app);
 
-    let currentUser = null;
-    const perPage = 12; // 페이지당 게시물 수
-    let currentPage = 1; // 현재 페이지  번호
+    let currentUser = null, lastOpenedDetail = null, likeLock = false, commentLock = false;
+    let pageCursors = {}, currentPage = 1;
+    const perPage = 12;
+
     document.getElementById('login').onclick  = () => signInWithPopup(auth, new GoogleAuthProvider());
     document.getElementById('logout').onclick = () => signOut(auth);
     onAuthStateChanged(auth, user => {
       currentUser = user;
       document.getElementById('user').textContent = user ? `👤 ${user.displayName}` : '로그인 필요';
-      document.getElementById('login').style.display  = user ? 'none' : 'inline-block';
-      document.getElementById('logout').style.display = user ? 'inline-block' : 'none';
+      document.getElementById('login').style.display  = user ? 'none' : 'inline-flex';
+      document.getElementById('logout').style.display = user ? 'inline-flex' : 'none';
       document.getElementById('postForm').style.display = user ? 'block' : 'none';
-        // ← 여기서만 초기 로드
-       loadPosts(1);
-      
+      loadPosts(1);
     });
 
     // 글 작성
@@ -160,7 +224,6 @@ let commentLock = false;
           const s = await uploadBytes(r, f);
           attachments.push({ name: f.name, url: await getDownloadURL(s.ref) });
         }
-        // photoURL 포함
         await addDoc(collection(db, 'posts'), {
           title, content,
           uid: currentUser.uid,
@@ -169,13 +232,11 @@ let commentLock = false;
           attachments,
           likes: 0,
           views: 0,
-          commentCount: 0,
           createdAt: serverTimestamp()
         });
         e.target.reset();
         loadPosts(1);
-      } catch (err) {
-        console.error(err);
+      } catch {
         alert('오류 발생');
       } finally {
         document.getElementById('uploadStatus').style.display = 'none';
