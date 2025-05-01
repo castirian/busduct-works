@@ -219,7 +219,7 @@
     const auth = getAuth(app);
     const storage = getStorage(app);
 
-    let currentUser = null, lastOpenedDetail = null, likeLock = false, commentLock = false;
+    let currentUser = null, lastOpenedDetail = null, dislikeLock = false; likeLock = false, commentLock = false;
     let pageCursors = {}, currentPage = 1;
     const perPage = 12;
 
@@ -255,6 +255,7 @@
           photoURL: currentUser.photoURL,
           attachments,
           likes: 0,
+          dislikes: 0,
           views: 0,
           createdAt: serverTimestamp()
         });
@@ -508,6 +509,14 @@ window.loadComments = loadComments;
       >
         👍 (<span id="like-count-${id}">${p.likes ?? 0}</span>)
       </button>
+
+   <!-- 새로 추가한 싫어요 버튼 -->
+   <button
+     id="dislike-btn-${id}"
+     class="action-btn"
+     onclick="event.stopPropagation(); dislikePost('${id}')"
+   >👎 (<span id="dislike-count-${id}">${p.dislikes||0}</span>)</button>
+
     </div>
     <div class="comment-section">
       <input
@@ -609,6 +618,42 @@ setTimeout(() => {
 }, 1000);
 }
 
+// 싫어요 1회 제한
+async function dislikePost(id) {
+  if (!currentUser) {
+    alert('로그인 후 이용해주세요.');
+    return;
+  }
+  const btn = document.getElementById(`dislike-btn-${id}`);
+  if (dislikeLock) return;
+  dislikeLock = true;
+  btn.disabled = true;
+
+  const disRef = doc(db, 'posts', id, 'dislikes', currentUser.uid);
+  const disSnap = await getDoc(disRef);
+  if (disSnap.exists()) {
+    alert('이미 싫어요를 누르셨습니다.');
+    dislikeLock = false;
+    btn.disabled = false;
+    return;
+  }
+
+  // 싫어요 기록
+  await setDoc(disRef, { uid: currentUser.uid, createdAt: serverTimestamp() });
+  // 카운트 1 증가
+  await updateDoc(doc(db, 'posts', id), { dislikes: increment(1) });
+
+  // 화면 업데이트
+  const e = document.getElementById(`dislike-count-${id}`);
+  if (e) e.textContent = parseInt(e.textContent || '0') + 1;
+
+  setTimeout(() => {
+    dislikeLock = false;
+    btn.disabled = false;
+  }, 1000);
+}
+
+
 // 댓글 쓰기
 async function addComment(id) {
 
@@ -665,7 +710,7 @@ window.likePost      = likePost;
 window.addComment    = addComment;
 window.deleteComment = deleteComment;
 window.deletePost    = deletePost;
-
+window.dislikePost = dislikePost;
     
   </script>
 </body>
