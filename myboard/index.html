@@ -201,151 +201,138 @@
     </div>
   </form>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp, orderBy, query, limit, startAfter, increment, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    import { getFunctions, httpsCallable }from "https://www.gstatic.com/firebasejs/10.9.0/firebase-functions.js";
-    import { getStorage, ref, uploadBytesResumable, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
+ <!-- 스크립트를 반드시 body 맨 아래에 두어야 form 요소가 로드된 뒤 실행됩니다 -->
+ <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp, orderBy, query, limit, startAfter, increment, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+  import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+  import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-functions.js";
+  import { getStorage, ref, uploadBytesResumable, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
-    // Firebase 설정 복원
-    const firebaseConfig = {
-      apiKey: "AIzaSyC6RvL8x2EQrgy8aSc8R63fzRvg85fX32w",
-      authDomain: "my-board-project-58b71.firebaseapp.com",
-      projectId: "my-board-project-58b71",
-      storageBucket: "my-board-project-58b71.firebasestorage.app",
-      messagingSenderId: "720342019721",
-      appId: "1:720342019721:web:910184dbb03e4451b1e058"
-    };
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-    const storage = getStorage(app);
-    const functions = getFunctions(app);
-    const createPost = httpsCallable(functions, 'createPost');
-
-    
-
-      let currentUser     = null,
-          lastOpenedDetail = null,
-          likeLock         = false,
-          commentLock      = false,
-          dislikeLock      = false;
-
-    let pageCursors = {}, currentPage = 1;
-    const perPage = 12;
-    document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('login').onclick  = () => signInWithPopup(auth, new GoogleAuthProvider());
-    document.getElementById('logout').onclick = () => signOut(auth);
-    onAuthStateChanged(auth, user => {
-      currentUser = user;
-      document.getElementById('user').textContent = user ? `👤 ${user.displayName}` : '로그인 필요';
-      document.getElementById('login').style.display  = user ? 'none' : 'inline-flex';
-      document.getElementById('logout').style.display = user ? 'inline-flex' : 'none';
-      document.getElementById('postForm').style.display = user ? 'block' : 'none';
-      loadPosts(1);
-    });
-
- // 글 작성
-document.getElementById('postForm').onsubmit = async e => {
-  e.preventDefault();
-
-  // 업로드 버튼 비활성화
-  const submitButton = e.target.querySelector('button[type="submit"]');
-  submitButton.disabled = true;
-
-  // ① 제목/본문 길이 제한 검사
-  const titleInput = e.target.title.value.trim();
-  const contentInput = e.target.content.value.trim();
-  if (titleInput.length === 0) {
-    alert('제목을 입력');
-    submitButton.disabled = false; // 오류시 버튼 재활성화
-    return;
-  }
-  if (titleInput.length > 100) {
-    alert(`제목은 최대 100자 (현재 ${titleInput.length}자)`);
-    submitButton.disabled = false; // 오류시 버튼 재활성화
-    return;
-  }
-  if (contentInput.length === 0) {
-    alert('내용을 입력');
-    submitButton.disabled = false; // 오류시 버튼 재활성화
-    return;
-  }
-  if (contentInput.length > 2000) {
-    alert(`내용은 최대 2000자 (현재 ${contentInput.length}자)`);
-    submitButton.disabled = false; // 오류시 버튼 재활성화
-    return;
-  }
-
-  // 업로드 상태 표시
-  const statusEl = document.getElementById('uploadStatus');
-  statusEl.style.display = 'block';
-  statusEl.textContent = '업로드 중 (0%)';
-
-  // 취소 버튼
-  const cancelBtn = document.getElementById('cancelUpload');
-  let cancelUpload = false;
-
-  cancelBtn.onclick = () => {
-    cancelUpload = true;
-    statusEl.textContent = '업로드 취소됨';
-    submitButton.disabled = false;  // 취소 후 버튼 재활성화
+  // Firebase 설정
+  const firebaseConfig = {
+    apiKey: "AIzaSyC6RvL8x2EQrgy8aSc8R63fzRvg85fX32w",
+    authDomain: "my-board-project-58b71.firebaseapp.com",
+    projectId: "my-board-project-58b71",
+    storageBucket: "my-board-project-58b71.firebasestorage.app",
+    messagingSenderId: "720342019721",
+    appId: "1:720342019721:web:910184dbb03e4451b1e058"
   };
+  const app       = initializeApp(firebaseConfig);
+  const db        = getFirestore(app);
+  const auth      = getAuth(app);
+  const storage   = getStorage(app);
+  const functions = getFunctions(app);
+  const createPost= httpsCallable(functions, 'createPost');
 
-  try {
-    const title = titleInput;
-    const content = contentInput;
-    const files = e.target.files.files;
-    const attachments = [];
+  let currentUser      = null;
+  let lastOpenedDetail = null;
+  let likeLock         = false;
+  let commentLock      = false;
+  let dislikeLock      = false;
+  let pageCursors      = {};
+  let currentPage      = 1;
+  const perPage        = 12;
 
-    for (const f of files) {
-      const fileRef = ref(storage, `uploads/${Date.now()}-${f.name}`);
-      const uploadTask = uploadBytesResumable(fileRef, f);
+  // 로그인/로그아웃 버튼
+  document.getElementById('login').onclick  = () => signInWithPopup(auth, new GoogleAuthProvider());
+  document.getElementById('logout').onclick = () => signOut(auth);
 
-      // ② progress 이벤트 구독
-      uploadTask.on('state_changed',
-        snapshot => {
-          if (cancelUpload) {
-            uploadTask.cancel(); // 업로드 취소
-            return;
-          }
+  // 인증 상태 변화 처리
+  onAuthStateChanged(auth, user => {
+    currentUser = user;
+    document.getElementById('user').textContent       = user ? `👤 ${user.displayName}` : '로그인 필요';
+    document.getElementById('login').style.display    = user ? 'none' : 'inline-flex';
+    document.getElementById('logout').style.display   = user ? 'inline-flex' : 'none';
+    document.getElementById('postForm').style.display = user ? 'block' : 'none';
+    loadPosts(1);
+  });
 
-          const pct = ((snapshot.bytesTransferred / snapshot.totalBytes) * 100).toFixed(0);
-          statusEl.textContent = `업로드 중 (${pct}%)`;
-        },
-        error => {
-          console.error(error);
-          alert('업로드 중 오류 발생');
-          submitButton.disabled = false; // 오류 발생 시 버튼 활성화
-        }
-      );
+  // 글 작성 폼
+  document.getElementById('postForm').onsubmit = async e => {
+    e.preventDefault();
+    const submitButton = e.target.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
 
-      // 완료 대기 후 URL
-      const snap = await uploadTask;
-      const url = await getDownloadURL(snap.ref);
-      attachments.push({ name: f.name, url });
+    // 제목/본문 길이 검사
+    const titleInput   = e.target.title.value.trim();
+    const contentInput = e.target.content.value.trim();
+    if (titleInput.length === 0) {
+      alert('제목을 입력');
+      submitButton.disabled = false;
+      return;
+    }
+    if (titleInput.length > 100) {
+      alert(`제목은 최대 100자 (현재 ${titleInput.length}자)`);
+      submitButton.disabled = false;
+      return;
+    }
+    if (contentInput.length === 0) {
+      alert('내용을 입력');
+      submitButton.disabled = false;
+      return;
+    }
+    if (contentInput.length > 2000) {
+      alert(`내용은 최대 2000자 (현재 ${contentInput.length}자)`);
+      submitButton.disabled = false;
+      return;
     }
 
-    // Cloud Function 호출로 변경
-    const res = await createPost({
-      title,
-      content,
-      attachments
-    });
+    // 업로드 상태
+    const statusEl = document.getElementById('uploadStatus');
+    statusEl.style.display = 'block';
+    statusEl.textContent   = '업로드 중 (0%)';
 
-    e.target.reset();
-    loadPosts(1);
-  } catch (err) {
-    console.error(err);
-    alert('오류 발생');
-  } finally {
-    // ③ 모든 파일 처리 후 상태창 숨기기
-    statusEl.style.display = 'none';
-    submitButton.disabled = false; // 업로드 완료 후 버튼 재활성화
-  }
-};
-    });
+    // 취소 버튼
+    const cancelBtn = document.getElementById('cancelUpload');
+    let cancelUpload = false;
+    cancelBtn.onclick = () => {
+      cancelUpload = true;
+      statusEl.textContent = '업로드 취소됨';
+      submitButton.disabled = false;
+    };
+
+    try {
+      const attachments = [];
+      const files = e.target.files.files;
+
+      for (const f of files) {
+        const fileRef  = ref(storage, `uploads/${Date.now()}-${f.name}`);
+        const uploadTask = uploadBytesResumable(fileRef, f);
+
+        uploadTask.on('state_changed',
+          snapshot => {
+            if (cancelUpload) {
+              uploadTask.cancel();
+              return;
+            }
+            const pct = ((snapshot.bytesTransferred / snapshot.totalBytes) * 100).toFixed(0);
+            statusEl.textContent = `업로드 중 (${pct}%)`;
+          },
+          error => {
+            console.error(error);
+            alert('업로드 중 오류 발생');
+            submitButton.disabled = false;
+          }
+        );
+
+        const snap = await uploadTask;
+        const url  = await getDownloadURL(snap.ref);
+        attachments.push({ name: f.name, url });
+      }
+
+      // Cloud Function 호출
+      await createPost({ title: titleInput, content: contentInput, attachments });
+      e.target.reset();
+      loadPosts(1);
+    } catch (err) {
+      console.error(err);
+      alert('오류 발생');
+    } finally {
+      statusEl.style.display = 'none';
+      submitButton.disabled   = false;
+    }
+  };
 
 
     async function getTotalPosts() {
