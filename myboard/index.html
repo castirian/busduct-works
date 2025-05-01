@@ -24,13 +24,42 @@
   text-overflow: ellipsis;
 }
     .post-item .comment-count { font-size: 0.6em; margin-left: 6px; background: #444; padding: 1px 4px; border-radius: 12px; }
-    
+ 
+/* 헤더: 제목·메타·조회수 배치 */
+.post-item .header {
+  display: flex;
+  justify-content: space-between; /* 좌우 끝으로 배치 */
+  align-items: center;
+}
+
+/* 작성자/날짜 세로 스택, 우측 정렬 */
+.post-item .meta-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 0.5em;    /* 메타 글씨는 50% 크기 */
+  line-height: 1.2;
+}
+
+/* 조회수는 메타 옆, 같은 행에 */
+.post-item .views {
+  margin-left: 16px;   /* 메타와 간격 */
+  white-space: nowrap;
+  font-size: 0.5em;    /* 조회수 글씨도 50% */
+}
+
+    /* 제목은 남은 공간을 채우기 */
+.post-item .title {
+  flex: 1;
+  margin-right: 12px;  /* 메타와 겹치지 않게 */
+}
+
 /* 메타 정보(작성자/날짜 등) 높이도 줄이려면 */
 .post-item .meta span {
   line-height: 1;        /* 기본 보다 좁게 */
   margin: 0;             /* 간격 없애기 */
   padding: 0;
-  font-size: 0.5em;
+  font-size: 0.7em;
 }
 
     .centered { display: flex; justify-content: center; margin-top: 10px; }
