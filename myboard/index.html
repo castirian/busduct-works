@@ -115,7 +115,7 @@
 
     let currentUser = null;
     const perPage = 12; // 페이지당 게시물 수
-
+    let currentPage = 1; // 현재 페이지  번호
     document.getElementById('login').onclick  = () => signInWithPopup(auth, new GoogleAuthProvider());
     document.getElementById('logout').onclick = () => signOut(auth);
     onAuthStateChanged(auth, user => {
@@ -207,6 +207,7 @@ function renderPagination(currentPage, totalPosts) {
 
     // 게시글 리스트 (페이지네이션)
     async function loadPosts(page = 1) {
+  currentPage = page;            // 호출된 페이지를 기록
   const list = document.getElementById('postList');
   list.innerHTML = '';
 
