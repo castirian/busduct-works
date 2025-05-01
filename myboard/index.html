@@ -256,6 +256,12 @@
     e.preventDefault();
     const submitButton = e.target.querySelector('button[type="submit"]');
     submitButton.disabled = true;
+    
+  // ── 로그인 검사 ──
+  if (!currentUser) {
+    alert('로그인 후 이용해주세요.');
+    return;
+  }
 
     // 제목/본문 길이 검사
     const titleInput   = e.target.title.value.trim();
