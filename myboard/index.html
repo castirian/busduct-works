@@ -225,8 +225,20 @@
   const db        = getFirestore(app);
   const auth      = getAuth(app);
   const storage   = getStorage(app);
-  const functions = getFunctions(app);
-  const createPost= httpsCallable(functions, 'createPost');
+
+// (이미 init 해두신 가정)
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-functions.js";
+
+const functions  = getFunctions(app);
+const createPost = httpsCallable(functions, 'createPost');
+
+// 글 작성 로직 안에서:
+await createPost({
+  title:       titleInput,
+  content:     contentInput,
+  attachments: attachments
+});
+
 
   let currentUser      = null;
   let lastOpenedDetail = null;

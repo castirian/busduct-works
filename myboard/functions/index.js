@@ -59,6 +59,9 @@ exports.rateLimited = functions.https.onCall(async (data, context) => {
 // Callable Function: 클라이언트에서 호출해서 글을 씁니다.
 exports.createPost = functions.https.onCall(async (data, context) => {
     // 1) 인증 확인
+
+    console.log('▶ createPost 호출 – context.auth:', context.auth);
+    
     if (!context.auth) {
       throw new functions.https.HttpsError("unauthenticated", "로그인이 필요합니다.");
     }
