@@ -239,58 +239,89 @@
       loadPosts(1);
     });
 
-    // 글 작성
-    document.getElementById('postForm').onsubmit = async e => {
-      e.preventDefault();
-      document.getElementById('uploadStatus').style.display = 'block';
-      try {
-        const title = e.target.title.value;
-        const content = e.target.content.value;
-        const files = e.target.files.files;
-        const attachments = [];
+ // 글 작성
+document.getElementById('postForm').onsubmit = async e => {
+  e.preventDefault();
 
-         for (const f of files) {
-   const fileRef = ref(storage, `uploads/${Date.now()}-${f.name}`);
-   // ① resumable 업로드 시작
-   const uploadTask = uploadBytesResumable(fileRef, f);
+  // ① 제목/본문 길이 제한 검사
+  const titleInput   = e.target.title.value.trim();
+  const contentInput = e.target.content.value.trim();
+  if (titleInput.length === 0) {
+    alert('제목을 입력');
+    return;
+  }
+  if (titleInput.length > 100) {
+    alert(`제목은 최대 100자 (현재 ${titleInput.length}자)`);
+    return;
+  }
+  if (contentInput.length === 0) {
+    alert('내용을 입력');
+    return;
+  }
+  if (contentInput.length > 2000) {
+    alert(`내용은 최대 2000자 (현재 ${contentInput.length}자)`);
+    return;
+  }
 
-   // ② progress 이벤트 구독
-   uploadTask.on('state_changed',
-     snapshot => {
-       const pct = ((snapshot.bytesTransferred / snapshot.totalBytes) * 100).toFixed(0);
-       document.getElementById('uploadStatus').textContent = `업로드 중 (${pct}%)`;
-     },
-     error => {
-       console.error(error);
-       alert('업로드 중 오류 발생');
-     }
-   );
+  // 기존 업로드 로직 시작
+  const statusEl = document.getElementById('uploadStatus');
+  statusEl.style.display     = 'block';
+  statusEl.textContent       = '업로드 중 (0%)';
 
-   // ③ 완료 대기 후 URL 가져오기
-   const snap = await uploadTask;
-   const url  = await getDownloadURL(snap.ref);
-   attachments.push({ name: f.name, url });
- }
+  try {
+    const title = titleInput;
+    const content = contentInput;
+    const files = e.target.files.files;
+    const attachments = [];
 
-        await addDoc(collection(db, 'posts'), {
-          title, content,
-          uid: currentUser.uid,
-          username: currentUser.displayName,
-          photoURL: currentUser.photoURL,
-          attachments,
-          likes: 0,
-          dislikes: 0,
-          views: 0,
-          createdAt: serverTimestamp()
-        });
-        e.target.reset();
-        loadPosts(1);
-      } catch {
-        alert('오류 발생');
-      } finally {
-        document.getElementById('uploadStatus').style.display = 'none';
-      }
-    };
+    for (const f of files) {
+      const fileRef    = ref(storage, `uploads/${Date.now()}-${f.name}`);
+      const uploadTask = uploadBytesResumable(fileRef, f);
+
+      // ② progress 이벤트 구독
+      uploadTask.on('state_changed',
+        snapshot => {
+          const pct = ((snapshot.bytesTransferred / snapshot.totalBytes) * 100).toFixed(0);
+          statusEl.textContent = `업로드 중 (${pct}%)`;
+        },
+        error => {
+          console.error(error);
+          alert('업로드 중 오류 발생');
+        }
+      );
+
+      // 완료 대기 후 URL
+      const snap = await uploadTask;
+      const url  = await getDownloadURL(snap.ref);
+      attachments.push({ name: f.name, url });
+    }
+
+    // Firestore에 글 쓰기
+    await addDoc(collection(db, 'posts'), {
+      title,
+      content,
+      uid:           currentUser.uid,
+      username:      currentUser.displayName,
+      photoURL:      currentUser.photoURL,
+      attachments,
+      likes:         0,
+      dislikes:      0,
+      views:         0,
+      commentCount:  0,
+      createdAt:     serverTimestamp()
+    });
+
+    e.target.reset();
+    loadPosts(1);
+  } catch (err) {
+    console.error(err);
+    alert('오류 발생');
+  } finally {
+    // ③ 모든 파일 처리 후 상태창 숨기기
+    statusEl.style.display = 'none';
+  }
+};
+
 
     async function getTotalPosts() {
       const countSnap = await getCountFromServer(collection(db, 'posts'));
