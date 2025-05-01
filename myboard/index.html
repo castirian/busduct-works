@@ -275,7 +275,7 @@ function renderPagination(currentPage, totalPosts) {
        <div class="title">${p.title}<span class="comment-count">${commentCount}</span></div>
      </div>
 
-     <div class="content-preview">${p.content}</div>
+     <div class="content-preview">${p.content.slice(0,100)}</div>
 
      <div class="footer">
        <div class="info">
