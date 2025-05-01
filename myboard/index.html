@@ -391,17 +391,33 @@ async function loadComments(postId) {
   if (!listEl) return;
   listEl.innerHTML = '';
 
-  const q = query(
-    collection(db, 'posts', postId, 'comments'),
-    orderBy('createdAt')
+  const snapshot = await getDocs(
+    query(
+      collection(db, 'posts', postId, 'comments'),
+      orderBy('createdAt')
+    )
   );
-  const snapshot = await getDocs(q);
   snapshot.forEach(docC => {
     const data = docC.data();
     const time = data.createdAt?.toDate().toLocaleString('ko-KR', {
-      year: '2-digit', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit'
+      year: '2-digit',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
     });
+
+    // 삭제 버튼을 보여줄지 결정
+    let deleteBtnHTML = '';
+    if (currentUser && currentUser.uid === data.uid) {
+      deleteBtnHTML = `
+        <button
+          class="action-btn comment-delete-btn"
+          onclick="deleteComment('${postId}', '${docC.id}')"
+        >삭제</button>
+      `;
+    }
+
     const li = document.createElement('li');
     li.className = 'comment-item';
     li.innerHTML = `
@@ -410,10 +426,7 @@ async function loadComments(postId) {
         <span class="comment-time">${time}</span>
       </div>
       <div class="comment-text">${data.text}</div>
-      <button
-        class="action-btn comment-delete-btn"
-        onclick="deleteComment('${postId}', '${docC.id}')"
-      >삭제</button>
+      ${deleteBtnHTML}
     `;
     listEl.appendChild(li);
   });
@@ -598,6 +611,13 @@ setTimeout(() => {
 
 // 댓글 쓰기
 async function addComment(id) {
+
+  // 1) 로그인되지 않았으면 경고하고 종료
+  if (!currentUser) {
+    alert('로그인 후 이용해주세요.');
+    return;
+  }
+  
 const btn = document.querySelector(`#comment-btn-${id}`); // 버튼 id 확인
 if (commentLock) return;
 commentLock = true;
