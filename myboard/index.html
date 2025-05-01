@@ -152,6 +152,30 @@
       color: #facc15;
       margin-bottom: 10px;
     }
+
+    .comment-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 0;
+  border-bottom: 1px solid #333;
+}
+.comment-content {
+  display: flex;
+  gap: 8px;
+  font-size: 0.75em;
+  color: #aaa;
+}
+.comment-text {
+  margin-left: 4px;
+}
+.comment-delete-btn {
+  align-self: flex-end;
+  min-width: auto;
+  padding: 2px 8px;
+  font-size: 0.75em;
+}
+
   </style>
 </head>
 <body>
@@ -363,26 +387,39 @@ function renderPagination(currentPage, totalPosts) {
 
 // 게시글 상세 하단 댓글 불러오기
 async function loadComments(postId) {
-    const listEl = document.getElementById(`comment-list-${postId}`);
-    if (!listEl) return;
-    listEl.innerHTML = '';
+  const listEl = document.getElementById(`comment-list-${postId}`);
+  if (!listEl) return;
+  listEl.innerHTML = '';
 
-    // 댓글 컬렉션에서 createdAt 순 정렬 후 불러오기
-    const q = query(
-      collection(db, 'posts', postId, 'comments'),
-      orderBy('createdAt')
-    );
-    const snapshot = await getDocs(q);
-    snapshot.forEach(docC => {
-      const data = docC.data();
-      const li = document.createElement('li');
-      li.className = 'comment-item';
-      li.innerHTML = `<span>${data.author}: ${data.text}</span>`;
-      listEl.appendChild(li);
+  const q = query(
+    collection(db, 'posts', postId, 'comments'),
+    orderBy('createdAt')
+  );
+  const snapshot = await getDocs(q);
+  snapshot.forEach(docC => {
+    const data = docC.data();
+    const time = data.createdAt?.toDate().toLocaleString('ko-KR', {
+      year: '2-digit', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit'
     });
-  }
-  // inline onclick 등에서 참조할 수 있도록 전역에 노출
-  window.loadComments = loadComments;
+    const li = document.createElement('li');
+    li.className = 'comment-item';
+    li.innerHTML = `
+      <div class="comment-content">
+        <span class="comment-author">${data.author}</span>
+        <span class="comment-time">${time}</span>
+      </div>
+      <div class="comment-text">${data.text}</div>
+      <button
+        class="action-btn comment-delete-btn"
+        onclick="deleteComment('${postId}', '${docC.id}')"
+      >삭제</button>
+    `;
+    listEl.appendChild(li);
+  });
+}
+// inline onclick 등에서 참조할 수 있도록 전역에 노출
+window.loadComments = loadComments;
 
 
     // 상세 보기
