@@ -69,6 +69,12 @@
     div[id^="post-content-"] {
       white-space: pre-wrap;
     }
+    .detail .card {
+  max-height: 80vh;       /* 화면 높이(viewport)의 80% */
+  overflow-y: auto;       /* 내용이 넘치면 세로 스크롤 */
+  padding: 16px;          /* 기존 패딩 조정해도 좋습니다 */
+}
+
   </style>
   <link rel="icon" href="favicon.ico" />
 </head>
