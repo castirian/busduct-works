@@ -12,10 +12,26 @@
     input, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #555; border-radius: 8px; background: #1e1e1e; color: #e5e7eb; }
     button { background: #4f46e5; color: white; padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
     button:hover { background: #6366f1; }
-    .post-item { padding: 12px 0; border-bottom: 1px solid #444; }
-    .post-item .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .post-item { padding: 4px 0; border-bottom: 1px solid #444; }
+    .post-item .title {
+  margin: 0;             /* 불필요한 여백 제거 */
+  padding: 0;            /* 타이틀 자체 패딩 없애기 */
+  line-height: 1;        /* 폰트 크기와 동일한 높이 */
+  font-size: 1rem;       /* 필요하면 폰트 크기도 소폭 줄이기 */
+  height: 1rem;          /* 정확히 한 줄 높이 */
+  overflow: hidden;      /* 혹시 넘칠 때 숨기기 */
+  white-space: nowrap;   /* 줄 바꿈 없이 한 줄로 */
+  text-overflow: ellipsis;
+}
     .post-item .comment-count { font-size: 0.6em; margin-left: 6px; background: #444; padding: 1px 4px; border-radius: 12px; }
-    .post-item .meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; margin-left: 10px; color: #aaa; }
+    
+/* 메타 정보(작성자/날짜 등) 높이도 줄이려면 */
+.post-item .meta span {
+  line-height: 1;        /* 기본 보다 좁게 */
+  margin: 0;             /* 간격 없애기 */
+  padding: 0;
+}
+
     .centered { display: flex; justify-content: center; margin-top: 10px; }
     .uploading { text-align: center; color: #facc15; margin-bottom: 10px; }
     .pagination button.active { background: #6366f1; cursor: default; opacity: 0.8; }
