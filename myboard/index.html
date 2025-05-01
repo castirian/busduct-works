@@ -256,7 +256,7 @@
     e.preventDefault();
     const submitButton = e.target.querySelector('button[type="submit"]');
     submitButton.disabled = true;
-    
+
   // ── 로그인 검사 ──
   if (!currentUser) {
     alert('로그인 후 이용해주세요.');
@@ -332,7 +332,9 @@
         attachments.push({ name: f.name, url });
       }
 
-      // Cloud Function 호출
+      // Cloud Function 호출 전, ID 토큰을 강제로 갱신
+      await auth.currentUser.getIdToken(/* forceRefresh= */ true);
+      // 이제 갱신된 토큰이 포함된 상태로 함수를 호출
       await createPost({ title: titleInput, content: contentInput, attachments });
       e.target.reset();
       loadPosts(1);
