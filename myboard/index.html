@@ -37,10 +37,9 @@
     .post-item .comment-count { font-size: 0.6em; margin-left: 6px; background: #444; padding: 1px 4px; border-radius: 12px; }
 
 
-    /* 제목은 남은 공간을 채우기 */
-.post-item .title {
-  flex: 1;
-  margin-right: 12px;  /* 메타와 겹치지 않게 */
+    .post-item .title {
+  font-size: 1.06em;    /* 1em + 약 1pt (1pt ≈ 0.06em) */
+  font-weight: 600;     /* 보통 500~700 사이로 조절 가능 */
 }
 
     .centered { display: flex; justify-content: center; margin-top: 10px; }
@@ -321,11 +320,23 @@ async function loadComments(postId) {
         detail.style.display = 'none';
         return;
       }
-      const refDoc = doc(db, 'posts', id);
-      const [snap] = await Promise.all([
-        getDoc(refDoc),
-        updateDoc(refDoc, { views: increment(1) })
-      ]);
+  const refDoc = doc(db, 'posts', id);
+  // 1) 원본 문서 가져오기
+  const snap = await getDoc(refDoc);
+
+
+   // 2) 로그인된 사용자가 아직 안 본 글인지 체크
+   if (currentUser) {
+     const viewRef = doc(db, 'posts', id, 'views', currentUser.uid);
+     const viewSnap = await getDoc(viewRef);
+     if (!viewSnap.exists()) {
+       // 3) 조회 기록 남기고, views 카운트 1 증가
+       await setDoc(viewRef, { uid: currentUser.uid, createdAt: serverTimestamp() });
+       await updateDoc(refDoc, { views: increment(1) });
+       // 화면에서도 반영
+       p.views = (p.views || 0) + 1;
+     }
+   }
       const p = snap.data();
       const dateStr = p.createdAt?.toDate().toLocaleString();
       const embedded = [];
@@ -407,6 +418,8 @@ async function editPost(id) {
     // 화면 반영 및 정리
     titleEl.textContent   = newTitle;
     contentEl.textContent = newContent;
+    // 수정 후 바로 목록에 반영
+   loadPosts(currentPage);
     editDiv.remove();
     titleEl.style.display   = '';
     contentEl.style.display = '';
