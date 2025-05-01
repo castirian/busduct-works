@@ -30,6 +30,7 @@
   line-height: 1;        /* 기본 보다 좁게 */
   margin: 0;             /* 간격 없애기 */
   padding: 0;
+  font-size: 0.5em;
 }
 
     .centered { display: flex; justify-content: center; margin-top: 10px; }
@@ -239,11 +240,17 @@ function renderPagination(currentPage, totalPosts) {
     const div = document.createElement('div');
     div.className = 'post-item';
     div.onclick = () => toggleDetail(div, d.id);
-    div.innerHTML = `
-      <div class="title">${p.title}<span class="comment-count">${commentCount}</span></div>
-      <div class="meta"><span class="author">${p.username}</span><span class="post-date">${dateStr}</span><span class="views">${p.views}</span></div>
-      <div class="detail" style="display:none"></div>
-    `;
+     div.innerHTML = `
+   <div class="header">
+     <div class="title">${p.title}<span class="comment-count">${commentCount}</span></div>
+     <div class="meta">
+       <span class="author">${p.username}</span>
+       <span class="post-date">${dateStr}</span>
+       <span class="views">${p.views}</span>
+     </div>
+   </div>
+   <div class="detail" style="display:none"></div>
+ `;
     list.appendChild(div);
   }
 
