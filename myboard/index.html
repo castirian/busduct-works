@@ -194,7 +194,7 @@
     <textarea name="content" rows="4" placeholder="내용 입력" required></textarea>
     <input type="file" name="files" multiple>
     <div id="uploadStatus" class="uploading" style="display:none;">
-      <button id="cancelUpload" type="button">❌</button>
+    <button id="cancelUpload" type="button">❌</button>
     </div>
     <div class="centered">
       <button type="submit" class="action-btn">글 작성</button>
@@ -234,7 +234,7 @@
 
     let pageCursors = {}, currentPage = 1;
     const perPage = 12;
-
+    document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('login').onclick  = () => signInWithPopup(auth, new GoogleAuthProvider());
     document.getElementById('logout').onclick = () => signOut(auth);
     onAuthStateChanged(auth, user => {
@@ -345,7 +345,7 @@ document.getElementById('postForm').onsubmit = async e => {
     submitButton.disabled = false; // 업로드 완료 후 버튼 재활성화
   }
 };
-
+    });
 
 
     async function getTotalPosts() {
