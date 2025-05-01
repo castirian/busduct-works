@@ -115,24 +115,41 @@
 
     /* 공통 액션 버튼 스타일 */
     .action-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 120px;
-      height: 44px;
-      padding: 0 16px;
-      border-radius: 8px;
-      background: #4f46e5;
-      color: #fff;
-      font-weight: 600;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background 0.2s;
-      margin: 4px 0;
-    }
-    .action-btn:hover {
-      background: #6366f1;
-    }
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 9999px;                             /* pill 형태 */
+  background: linear-gradient(135deg, #667eea, #764ba2); /* 그라디언트 */
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1), 
+              0 1px 3px rgba(0,0,0,0.08);             /* 그림자 */
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  margin: 4px 0;
+}
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 10px rgba(0,0,0,0.12), 
+              0 2px 4px rgba(0,0,0,0.10);
+}
+.action-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1), 
+              0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* 아이콘 사용 시 간격 */
+.action-btn svg {
+  margin-right: 8px;
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+}
+
     .action-btn > *:not(:last-child) {
       margin-right: 6px;
     }
