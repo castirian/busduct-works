@@ -258,23 +258,20 @@ function renderPagination(currentPage, totalPosts) {
     div.className = 'post-item';
     div.onclick = () => toggleDetail(div, d.id);
      div.innerHTML = `
-   <div class="header">
-     <div class="title">${p.title}<span class="comment-count">${commentCount}</span></div>
-     <div class="meta">
-       <span class="author">${p.username}</span>
-       <span class="post-date">${dateStr}</span>
-       <span class="views">${p.views}</span>
+     <div class="header">
+       <div class="title">${p.title}<span class="comment-count">${commentCount}</span></div>
      </div>
-   </div>
+
      <div class="content-preview">${p.content}</div>
 
-  <div class="footer">
-    <div class="info">
-      <span class="author">${p.username}</span> ·
-      <span class="datetime">${dateStr}</span>
-    </div>
-    <div class="views">👁 ${p.views ?? 0}</div>
-  </div>
+     <div class="footer">
+       <div class="info">
+         <span class="author">${p.username}</span> ·
+         <span class="datetime">${dateStr}</span>
+       </div>
+       <div class="views">👁 ${p.views ?? 0}</div>
+     </div>
+
 
   <div class="detail" style="display:none"></div>
  `;
@@ -357,7 +354,7 @@ async function loadComments(postId) {
 
       detail.innerHTML = `
         <div class="card" onclick="event.stopPropagation()">
-          <h3 id="post-title-${id}">${p.title}</h3>
+         
           <div id="post-content-${id}">${p.content}</div>
           ${embedded.join('')}
           ${filesHtml}
@@ -380,6 +377,8 @@ async function loadComments(postId) {
 
 // 수정 기능 (제목+내용)
 async function editPost(id) {
+   // 1) 중복 방지
+   if (document.getElementById(`edit-form-${id}`)) return;
   const titleEl   = document.getElementById(`post-title-${id}`);
   const contentEl = document.getElementById(`post-content-${id}`);
 
@@ -389,6 +388,7 @@ async function editPost(id) {
 
   // 2) 편집용 폼 컨테이너 생성
   const editDiv = document.createElement('div');
+  editDiv.id = `edit-form-${id}`;   // ← 이 줄 추가
   editDiv.innerHTML = `
     <input id="edit-title-${id}" type="text" value="${titleEl.textContent}" style="width:100%;margin-bottom:6px;padding:4px;" />
     <textarea id="edit-content-${id}" rows="6" style="width:100%;padding:4px;">${contentEl.textContent}</textarea>
