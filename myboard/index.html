@@ -219,11 +219,12 @@
     const auth = getAuth(app);
     const storage = getStorage(app);
 
-    let currentUser     = null,
-    lastOpenedDetail = null,
-    likeLock         = false,
-    commentLock      = false,
-    dislikeLock      = false;
+      let currentUser     = null,
+          lastOpenedDetail = null,
+          likeLock         = false,
+          commentLock      = false,
+          dislikeLock      = false;
+
     let pageCursors = {}, currentPage = 1;
     const perPage = 12;
 
