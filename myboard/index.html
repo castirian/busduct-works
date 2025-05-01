@@ -461,29 +461,29 @@ async function loadComments(postId) {
     <div class="post-actions">
       ${isOwner ? `
         <button
-          id="edit-btn-${id}"
+          id="edit-btn-${id}" class="action-btn"
           onclick="event.stopPropagation(); editPost('${id}')"
         >✏️ 수정</button>
         <button
-          id="delete-btn-${id}"
+          id="delete-btn-${id}" class="action-btn"
           onclick="event.stopPropagation(); deletePost('${id}')"
         >🗑️ 삭제</button>
       ` : ``}
       <button
-        id="like-btn-${id}"
+        id="like-btn-${id}" class="action-btn"
         onclick="event.stopPropagation(); likePost('${id}')"
       >
         👍 (<span id="like-count-${id}">${p.likes ?? 0}</span>)
       </button>
     </div>
-    <div class="comment-section">
+    <div class="action-btn">
       <input
         id="comment-input-${id}"
         type="text"
         placeholder="댓글 달기"
       >
       <button
-        id="comment-btn-${id}"
+        id="comment-btn-${id}" class="action-btn"
         onclick="event.stopPropagation(); addComment('${id}')"
       >댓글 작성</button>
       <ul id="comment-list-${id}"></ul>
