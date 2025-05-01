@@ -321,23 +321,22 @@ async function loadComments(postId) {
         return;
       }
   const refDoc = doc(db, 'posts', id);
+
   // 1) 원본 문서 가져오기
   const snap = await getDoc(refDoc);
-
-
-   // 2) 로그인된 사용자가 아직 안 본 글인지 체크
-   if (currentUser) {
-     const viewRef = doc(db, 'posts', id, 'views', currentUser.uid);
-     const viewSnap = await getDoc(viewRef);
-     if (!viewSnap.exists()) {
-       // 3) 조회 기록 남기고, views 카운트 1 증가
-       await setDoc(viewRef, { uid: currentUser.uid, createdAt: serverTimestamp() });
-       await updateDoc(refDoc, { views: increment(1) });
-       // 화면에서도 반영
-       p.views = (p.views || 0) + 1;
-     }
-   }
-      const p = snap.data();
+  const p    = snap.data();            // ① 여기로 이동
+  // 2) 로그인된 사용자가 아직 안 본 글인지 체크
+  if (currentUser) {
+    const viewRef = doc(db, 'posts', id, 'views', currentUser.uid);
+    const viewSnap = await getDoc(viewRef);
+    if (!viewSnap.exists()) {
+      await setDoc(viewRef, { uid: currentUser.uid, createdAt: serverTimestamp() });
+      await updateDoc(refDoc, { views: increment(1) });
+      // 화면에서도 반영
+      p.views = (p.views || 0) + 1;      // ② 이제 에러 없이 동작
+    }
+  }
+      
       const dateStr = p.createdAt?.toDate().toLocaleString();
       const embedded = [];
       const contentHtml = p.content.replace(
@@ -356,6 +355,10 @@ async function loadComments(postId) {
 
       detail.innerHTML = `
   <div class="card" onclick="event.stopPropagation()">
+     <h3
+      id="post-title-${id}"
+      style="display: none;"    /* 화면에서는 숨깁니다 */
+    >${p.title}</h3>
     <div id="post-content-${id}">${p.content}</div>
     ${embedded.join('')}
     ${filesHtml}
