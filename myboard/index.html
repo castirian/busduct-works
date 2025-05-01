@@ -203,7 +203,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
     import { getFirestore, collection, addDoc, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, serverTimestamp, orderBy, query, limit, startAfter, increment, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
+    import { getStorage, ref, uploadBytesResumable, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-storage.js";
 
     // Firebase 설정 복원
     const firebaseConfig = {
@@ -248,11 +248,30 @@
         const content = e.target.content.value;
         const files = e.target.files.files;
         const attachments = [];
-        for (const f of files) {
-          const r = ref(storage, `uploads/${Date.now()}-${f.name}`);
-          const s = await uploadBytes(r, f);
-          attachments.push({ name: f.name, url: await getDownloadURL(s.ref) });
-        }
+
+         for (const f of files) {
+   const fileRef = ref(storage, `uploads/${Date.now()}-${f.name}`);
+   // ① resumable 업로드 시작
+   const uploadTask = uploadBytesResumable(fileRef, f);
+
+   // ② progress 이벤트 구독
+   uploadTask.on('state_changed',
+     snapshot => {
+       const pct = ((snapshot.bytesTransferred / snapshot.totalBytes) * 100).toFixed(0);
+       document.getElementById('uploadStatus').textContent = `업로드 중 (${pct}%)`;
+     },
+     error => {
+       console.error(error);
+       alert('업로드 중 오류 발생');
+     }
+   );
+
+   // ③ 완료 대기 후 URL 가져오기
+   const snap = await uploadTask;
+   const url  = await getDownloadURL(snap.ref);
+   attachments.push({ name: f.name, url });
+ }
+
         await addDoc(collection(db, 'posts'), {
           title, content,
           uid: currentUser.uid,
@@ -519,7 +538,7 @@ window.loadComments = loadComments;
    <button
      id="dislike-btn-${id}"
      onclick="event.stopPropagation(); dislikePost('${id}')"
-   >👎 (<span id="dislike-count-${id}">${p.dislikes||0}</span>)</button>
+   >👎 (<span id="dislike-count-${id}">${p.dislikes ?? 0}</span>)</button>
 
     </div>
     <div class="comment-section">
