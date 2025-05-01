@@ -518,7 +518,6 @@ window.loadComments = loadComments;
    <!-- 새로 추가한 싫어요 버튼 -->
    <button
      id="dislike-btn-${id}"
-     class="action-btn"
      onclick="event.stopPropagation(); dislikePost('${id}')"
    >👎 (<span id="dislike-count-${id}">${p.dislikes||0}</span>)</button>
 
