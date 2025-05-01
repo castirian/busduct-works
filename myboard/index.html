@@ -17,10 +17,12 @@
 
 .post-item .content-preview {
 
-  white-space: pre-wrap;    /* 실제 줄바꿈(Enter) 유지 */
-  overflow-wrap: anywhere;  /* 가능한 곳에서 단어 끊기 */
-  word-break: break-all;    /* 너무 긴 문자열도 강제 줄바꿈 */
-
+  display: -webkit-box;
+  -webkit-line-clamp: 2;       /* 2줄까지만 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;         /* 자동 줄바꿈 허용 */
 /*  display: -webkit-box;
 /*  -webkit-line-clamp: 2;
 /*  -webkit-box-orient: vertical;
