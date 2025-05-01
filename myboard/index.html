@@ -282,16 +282,18 @@
     }
 
     // 업로드 상태
-    const statusEl = document.getElementById('uploadStatus');
-    statusEl.style.display = 'block';
-    statusEl.textContent   = '업로드 중 (0%)';
+      const statusEl   = document.getElementById('uploadStatus');
+      const statusText = document.getElementById('statusText');
+      statusEl.style.display = 'block';
+      statusText.textContent = '업로드 중 (0%)';
+
 
     // 취소 버튼
     const cancelBtn = document.getElementById('cancelUpload');
     let cancelUpload = false;
     cancelBtn.onclick = () => {
       cancelUpload = true;
-      statusEl.textContent = '업로드 취소됨';
+      statusText.textContent = '업로드 취소됨';
       submitButton.disabled = false;
     };
 
@@ -310,7 +312,7 @@
               return;
             }
             const pct = ((snapshot.bytesTransferred / snapshot.totalBytes) * 100).toFixed(0);
-            statusEl.textContent = `업로드 중 (${pct}%)`;
+            statusText.textContent = `업로드 중 (${pct}%)`;
           },
           error => {
             console.error(error);
